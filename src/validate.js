@@ -1,3 +1,5 @@
+const filename = require('path').basename(__filename);
+const debug = require('./debug')(`dnssd:${filename}`);
 const ValidationError = require('./customError').create('ValidationError');
 
 function isNumeric(value) {
@@ -44,7 +46,7 @@ validate.serviceName = function serviceName(str) {
   // 15 bytes not including the leading underscore
   if (Buffer.byteLength(str) > 16) {
     // throw new ValidationError("Service '%s' is > 15 bytes", str);
-    console.warn("Service '%s' is > 15 bytes", str)
+    debug("Service '%s' is > 15 bytes", str)
   }
 
   if (!/^_[A-Za-z0-9]/.test(str) || !/[A-Za-z0-9]*$/.test(str)) {
@@ -97,7 +99,7 @@ validate.label = function label(str, name='label') {
 /**
  * Validates a port, throws err on invalid input
  *
- * @param {integer} num
+ * @param {number} num
  */
 validate.port = function port(num) {
   if (!Number.isInteger(num) || num <= 0 || num > 0xFFFF) {
