@@ -31,9 +31,9 @@ const STATE = {STOPPED: 'stopped', STARTED: 'started'};
  * @param {Number}                          port - port to advertise
  *
  * @param {Object}   [options]
- * @param {Object}   options.name       - instance name
- * @param {Object}   options.host       - hostname to use
- * @param {Object}   options.txt        - TXT record
+ * @param {string}   options.name       - instance name
+ * @param {string}   options.host       - hostname to use
+ * @param {string}   options.txt        - TXT record
  * @param {Object}   options.subtypes   - subtypes to register
  * @param {Object}   options.interface  - interface name or address to use
  */
@@ -101,9 +101,10 @@ Advertisement.prototype.constructor = Advertisement;
  * because a service needs a host. Service instance names (this.instanceName)
  * have to be unique and get renamed automatically the same way.
  *
+ * @param {Function} [callback]
  * @return {this}
  */
-Advertisement.prototype.start = function() {
+Advertisement.prototype.start = function(callback) {
   if (this.state === STATE.STARTED) {
     debug('Advertisement already started!');
     return this;
@@ -122,7 +123,12 @@ Advertisement.prototype.start = function() {
     .then(() => this._getDefaultID())
     .then(() => this._advertiseHostname())
     .then(() => this._advertiseService())
-    .catch(err => this._onError(err));
+    .catch(err => this._onError(err))
+    .then(err => {
+      if(callback) {
+        return callback(err, this.state);
+      }
+    });
 
   return this;
 };
@@ -141,6 +147,7 @@ Advertisement.prototype.start = function() {
  * @emits 'stopped'
  *
  * @param {Boolean} [forceImmediate]
+ * @param {Function} [callback]
  */
 Advertisement.prototype.stop = function(forceImmediate, callback) {
   debug(`Stopping advertisement "${this._id}"...`);
@@ -189,6 +196,12 @@ Advertisement.prototype.stop = function(forceImmediate, callback) {
 Advertisement.prototype.updateTXT = function(txtObj) {
   // validates txt first, will throw validation errors on bad input
   validate.txt(txtObj);
+  
+  if(this._serviceResponder == null) {
+    debug("ServiceResponder not ready");
+    console.log("ServiceResponder not ready");
+    return;
+  }
 
   // make sure responder handles network requests in event loop before updating
   // (otherwise could have unintended record conflicts)
@@ -210,6 +223,7 @@ Advertisement.prototype._onError = function(err) {
 
   this.stop(true); // stop immediately
   this.emit('error', err);
+  return err;
 };
 
 
@@ -369,7 +383,7 @@ Advertisement.prototype._advertiseService = function() {
  * This lets others know if an AAAA doesn't exist, for example.
  * (See 8.2.4 Negative Responses or whatever)
  *
- * @param  {NetworkInterface} intf
+ * @param  {NetworkInterface} addresses
  * @return {ResourceRecords[]}
  */
 Advertisement.prototype._makeAddressRecords = function(addresses) {
