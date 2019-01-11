@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const dnssd = require('../index.js');
+const dnssd = require('../src');
 
 
 //

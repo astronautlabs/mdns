@@ -182,8 +182,11 @@ module.exports.makeRawTXT = function(obj) {
   Object.keys(obj)
     .filter(key => obj[key] !== false)
     .forEach((key) => {
-      const value = obj[key];
-
+      let value = obj[key];
+      if (typeof value === 'number') {
+        value = value.toString();
+      }
+      
       result[key] = (typeof value === 'string')
         ? Buffer.alloc(value.length, value)
         : value;
@@ -206,7 +209,10 @@ module.exports.makeReadableTXT = function(obj) {
   Object.keys(obj)
     .filter(key => obj[key] !== false)
     .forEach((key) => {
-      const value = obj[key];
+      let value = obj[key];
+      if (typeof value === 'number') {
+        value = value.toString();
+      }
       result[key] = (Buffer.isBuffer(value)) ? value.toString() : value;
     });
 

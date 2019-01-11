@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-var dnssd = require('../index.js');
+var dnssd = require('../src');
 
 //
 //
