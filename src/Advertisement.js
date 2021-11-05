@@ -36,6 +36,8 @@ const STATE = {STOPPED: 'stopped', STARTED: 'started'};
  * @param {string}   options.txt        - TXT record
  * @param {Object}   options.subtypes   - subtypes to register
  * @param {Object}   options.interface  - interface name or address to use
+ * @param {number}   options.hostTTL    - host TTL
+ * @param {number}   options.serviceTTL - service TTL
  */
 function Advertisement(type, port, options = {}) {
   if (!(this instanceof Advertisement)) {
@@ -78,6 +80,8 @@ function Advertisement(type, port, options = {}) {
   this._defaultAddresses  = null;
   this._hostnameResponder = null;
   this._serviceResponder  = null;
+  this.hostTTL            = options.hostTTL || 120;
+  this.serviceTTL         = options.serviceTTL || 120;
 }
 
 Advertisement.prototype = Object.create(EventEmitter.prototype);
@@ -390,12 +394,12 @@ Advertisement.prototype._makeAddressRecords = function(addresses) {
 
   const As = addresses
     .filter(({ family }) => family === 'IPv4')
-    .map(({ address }) => new ResourceRecord.A({ name, address }));
+    .map(({ address }) => new ResourceRecord.A({ name, address, ttl: this.hostTTL }));
 
   const AAAAs = addresses
     .filter(({ family }) => family === 'IPv6')
     .filter(({ address }) => address.substr(0, 6).toLowerCase() === 'fe80::')
-    .map(({ address }) => new ResourceRecord.AAAA({ name, address }));
+    .map(({ address }) => new ResourceRecord.AAAA({ name, address, ttl: this.hostTTL }));
 
   const types = [];
   if (As.length) types.push(RType.A);
@@ -403,7 +407,7 @@ Advertisement.prototype._makeAddressRecords = function(addresses) {
 
   const NSEC = new ResourceRecord.NSEC({
     name    : name,
-    ttl     : 120,
+    ttl     : this.hostTTL,
     existing: types,
   });
 
@@ -444,6 +448,7 @@ Advertisement.prototype._makeServiceRecords = function() {
   const NSEC = new ResourceRecord.NSEC({
     name    : serviceName,
     existing: [RType.SRV, RType.TXT],
+    ttl     : this.hostTTL,
   });
 
   const SRV = new ResourceRecord.SRV({
@@ -451,12 +456,14 @@ Advertisement.prototype._makeServiceRecords = function() {
     target     : misc.fqdn(this.hostname, this._domain),
     port       : this.port,
     additionals: [NSEC, ...interfaceRecords],
+    ttl        : this.serviceTTL,
   });
 
   const TXT = new ResourceRecord.TXT({
     name       : serviceName,
     additionals: [NSEC],
     txt        : this.txt,
+    ttl        : this.serviceTTL,
   });
 
   records.push(SRV);
@@ -467,11 +474,13 @@ Advertisement.prototype._makeServiceRecords = function() {
     name       : registration,
     PTRDName   : serviceName,
     additionals: [SRV, TXT, NSEC, ...interfaceRecords],
+    ttl        : this.serviceTTL,
   }));
 
   records.push(new ResourceRecord.PTR({
     name    : enumerator,
     PTRDName: registration,
+    ttl        : this.serviceTTL,
   }));
 
   // ex: "_printer.sub._http._tcp.local."
@@ -480,6 +489,7 @@ Advertisement.prototype._makeServiceRecords = function() {
       name       : misc.fqdn(subType, '_sub', registration),
       PTRDName   : serviceName,
       additionals: [SRV, TXT, NSEC, ...interfaceRecords],
+      ttl        : this.serviceTTL,
     }));
   });
 
