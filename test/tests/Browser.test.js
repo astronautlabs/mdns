@@ -3,6 +3,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -33,10 +35,10 @@ describe('Browser', function() {
   Browser.__set__('Query', QueryConstructor);
 
   beforeEach(function() {
-    intf.reset();
-    query.reset();
-    resolver.reset();
-    ServiceResolverConstructor.reset();
+    intf.resetHistory();
+    query.resetHistory();
+    resolver.resetHistory();
+    ServiceResolverConstructor.resetHistory();
   });
 
 
@@ -86,7 +88,7 @@ describe('Browser', function() {
     it('should bind interface & start queries', function(done) {
       const browser = new Browser('_http._tcp');
 
-      sinon.stub(browser, '_startQuery', () => {
+      sinon.stub(browser, '_startQuery').callsFake(() => {
         expect(intf.bind).to.have.been.called;
         done();
       });
@@ -314,11 +316,12 @@ describe('Browser', function() {
     });
 
     it('should emit services when they are resolved/change/down', function(done) {
+      resolver.service.returns({});
       let obj;
 
       new Browser('_http._tcp')
         .on('serviceUp', (service) => {
-          expect(service).to.be.an.object;
+          expect(service).to.be.a('object');
           obj = service;
           resolver.emit('updated');
         })

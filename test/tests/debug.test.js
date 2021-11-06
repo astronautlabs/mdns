@@ -5,6 +5,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src/';
@@ -87,7 +89,7 @@ describe('debug()', function() {
           const debug = rewire(dir + '/debug');
           const fn = debug(namespace);
 
-          expect(fn).to.be.a.function;
+          expect(fn).to.be.a('function');
           expect(fn.isEnabled).to.be.true;
         });
       });
@@ -101,7 +103,7 @@ describe('debug()', function() {
           const debug = rewire(dir + '/debug');
           const fn = debug(namespace);
 
-          expect(fn.v).to.be.a.function;
+          expect(fn).to.be.a('function');
           expect(fn.v.isEnabled).to.be.true;
         });
       });

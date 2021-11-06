@@ -5,6 +5,8 @@ const chai      = require('chai');
 const expect    = chai.expect;
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -172,7 +174,7 @@ describe('ResourceRecord', function() {
       it('should make new record from given fields & defaults', function() {
         const record = new ResourceRecord.TXT({
           name: 'test._service._tcp.local.',
-          txt:  {key: new Buffer('value')},
+          txt:  {key: Buffer.from('value')},
         });
 
         expect(record).to.be.instanceof(ResourceRecord);
@@ -187,7 +189,7 @@ describe('ResourceRecord', function() {
         });
 
         expect(record.txt).to.eql({key: 'value'});
-        expect(record.txtRaw).to.eql({key: new Buffer('value')});
+        expect(record.txtRaw).to.eql({key: Buffer.from('value')});
       });
     });
 
@@ -227,7 +229,7 @@ describe('ResourceRecord', function() {
         });
 
         expect(record.txt).to.eql({Password: 'False'}); // <- a string!
-        expect(record.txtRaw).to.eql({Password: new Buffer('False')});
+        expect(record.txtRaw).to.eql({Password: Buffer.from('False')});
       });
 
       it('TXT-large.bin', function() {
@@ -280,7 +282,7 @@ describe('ResourceRecord', function() {
         const record = ResourceRecord.fromBuffer(wrapper);
 
         expect(record.txt).to.eql({key: 'value'});
-        expect(record.txtRaw).to.eql({key: new Buffer('value')});
+        expect(record.txtRaw).to.eql({key: Buffer.from('value')});
       });
 
       it('key= -> {key: null}', function() {
@@ -525,7 +527,7 @@ describe('ResourceRecord', function() {
   describe('ResourceRecord.Unknown', function() {
     describe('#constructor', function() {
       it('should make new record from given fields & defaults', function() {
-        const rdata = new Buffer('rdata');
+        const rdata = Buffer.from('rdata');
         const record = new ResourceRecord.Unknown({
           name  : 'test._service._tcp.local.',
           rrtype: 127,
@@ -562,7 +564,7 @@ describe('ResourceRecord', function() {
           isUnique: true,
         });
 
-        expect(record.RData).to.be.a.buffer;
+        expect(record.RData).to.be.a('Uint8Array');
       });
 
       it('OPT-unknown.bin', function() {
@@ -578,7 +580,7 @@ describe('ResourceRecord', function() {
           ttl   : 4500,
         });
 
-        expect(record.RData).to.be.a.buffer;
+        expect(record.RData).to.be.a('Uint8Array');
       });
     });
   });
@@ -737,7 +739,7 @@ describe('ResourceRecord', function() {
     const unknown = new ResourceRecord.Unknown({
       name: 'Unknown.type.',
       rrtype: 127,
-      rdata: new Buffer('rdata'),
+      rdata: Buffer.from('rdata'),
     });
 
     it('should return a clone', function() {

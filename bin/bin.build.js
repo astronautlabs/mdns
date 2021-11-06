@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-var dnssd = require('../src');
+const dnssd = require('../src');
 
 //
 //
@@ -11,7 +11,7 @@ main(process.argv);
 
 
 function showHelp(reason) {
-  if (reason) console.log('\n' + reason);
+  if (reason) console.log(`\n${reason}`);
 
   console.log('\nUsage: dnssd-js <command>\n');
   console.log('dnssd-js browse [type] [domain]');
@@ -23,36 +23,32 @@ function showHelp(reason) {
 }
 
 function exit(err) {
-  if (err) console.log('\n' + err + '\n');
+  if (err) console.log(`\n${err}\n`);
   process.exit();
 }
 
-function padStart(value, len) {
-  var filler = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : ' ';
-
-  var str = String(value);
-  var fill = String(filler);
-  var needed = len - str.length;
+function padStart(value, len, filler = ' ') {
+  const str = String(value);
+  const fill = String(filler);
+  const needed = len - str.length;
 
   return needed > 0 ? fill.repeat(needed) + str : str;
 }
 
-function padEnd(value, len) {
-  var filler = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : ' ';
-
-  var str = String(value);
-  var fill = String(filler);
-  var needed = len - str.length;
+function padEnd(value, len, filler = ' ') {
+  const str = String(value);
+  const fill = String(filler);
+  const needed = len - str.length;
 
   return needed > 0 ? str + fill.repeat(needed) : str;
 }
 
 function timestamp() {
-  var now = new Date();
+  const now = new Date();
 
-  var time = [padStart(now.getHours(), 2, 0), padStart(now.getMinutes(), 2, 0), padStart(now.getSeconds(), 2, 0), padStart(now.getMilliseconds(), 3, 0)];
+  const time = [padStart(now.getHours(), 2, 0), padStart(now.getMinutes(), 2, 0), padStart(now.getSeconds(), 2, 0), padStart(now.getMilliseconds(), 3, 0)];
 
-  return '[' + time.join(':') + ']';
+  return `[${time.join(':')}]`;
 }
 
 function print(time, status, type, instance) {
@@ -60,16 +56,16 @@ function print(time, status, type, instance) {
 }
 
 function browse(serviceType, domain) {
-  var browser = new dnssd.Browser(serviceType, { domain: domain });
+  const browser = new dnssd.Browser(serviceType, { domain });
 
   // format to:
   // [23:18:53:805]  Up    _http._tcp   Test @ box.local. (169.254.22.58:4576)
-  browser.on('serviceUp', function (service) {
-    print(timestamp(), 'Up', '_' + service.type.name + '._' + service.type.protocol, service.name + ' @ ' + service.host + ' (' + service.addresses[0] + ':' + service.port + ')');
+  browser.on('serviceUp', service => {
+    print(timestamp(), 'Up', `_${service.type.name}._${service.type.protocol}`, `${service.name} @ ${service.host} (${service.addresses[0]}:${service.port})`);
   });
 
-  browser.on('serviceDown', function (service) {
-    print(timestamp(), 'Down', '_' + service.type.name + '._' + service.type.protocol, service.name + ' @ ' + service.host + ' (' + service.addresses[0] + ':' + service.port + ')');
+  browser.on('serviceDown', service => {
+    print(timestamp(), 'Down', `_${service.type.name}._${service.type.protocol}`, `${service.name} @ ${service.host} (${service.addresses[0]}:${service.port})`);
   });
 
   browser.on('error', exit);
@@ -81,11 +77,11 @@ function browseAll(domain) {
   print('Time', 'U/D', 'Service Type', 'Instance');
   print('----', '---', '------------', '--------');
 
-  var browser = new dnssd.Browser(dnssd.all(), { domain: domain });
-  var active = {};
+  const browser = new dnssd.Browser(dnssd.all(), { domain });
+  const active = {};
 
-  browser.on('serviceUp', function (type) {
-    var serviceType = '_' + type.name + '._' + type.protocol;
+  browser.on('serviceUp', type => {
+    const serviceType = `_${type.name}._${type.protocol}`;
 
     // only start one browser for each new service type
     if (!active[serviceType]) {
@@ -101,16 +97,16 @@ function browseAll(domain) {
 function browseType(type, domain) {
   if (!type || type === 'all') return browseAll(domain);
 
-  var serviceType = void 0;
+  let serviceType;
 
   // wrap in case type validation fails
   try {
     serviceType = new dnssd.ServiceType(type);
   } catch (err) {
-    exit('Bad service type: ' + err.message);
+    exit(`Bad service type: ${err.message}`);
   }
 
-  console.log('Browsing for "' + serviceType + '":\n');
+  console.log(`Browsing for "${serviceType}":\n`);
   print('Time', 'U/D', 'Service Type', 'Instance');
   print('----', '---', '------------', '--------');
 
@@ -118,9 +114,8 @@ function browseType(type, domain) {
 }
 
 function advertise(type, portString, name, obj) {
-  var port = parseInt(portString, 10);
-  var txt = void 0,
-      advertisement = void 0;
+  const port = parseInt(portString, 10);
+  let txt, advertisement;
 
   if (!port) exit('Missing port number');
   if (!Number.isInteger(port)) exit('Bad port number');
@@ -130,32 +125,32 @@ function advertise(type, portString, name, obj) {
     try {
       txt = JSON.parse(obj);
     } catch (err) {
-      exit('Problem parsing txt object: ' + txt.message);
+      exit(`Problem parsing txt object: ${txt.message}`);
     }
   }
 
   // wrap in case advert args fail validation check
   try {
-    advertisement = new dnssd.Advertisement(type, port, { name: name, txt: txt });
+    advertisement = new dnssd.Advertisement(type, port, { name, txt });
   } catch (err) {
-    exit('Problem creating advertisement: ' + err.messsage);
+    exit(`Problem creating advertisement: ${err.messsage}`);
   }
 
-  console.log('Creating advertisement for "' + type + '"...');
+  console.log(`Creating advertisement for "${type}"...`);
 
-  advertisement.on('active', function () {
+  advertisement.on('active', () => {
     console.log('%s Advertisement now active', timestamp());
   });
 
-  advertisement.on('instanceRenamed', function (instance) {
+  advertisement.on('instanceRenamed', instance => {
     console.log('%s Advertisement instance renamed "%s" due to a conflict.', timestamp(), instance);
   });
 
-  advertisement.on('hostRenamed', function (host) {
+  advertisement.on('hostRenamed', host => {
     console.log('%s Advertisement hostname renamed "%s" due to a conflict.', timestamp(), host);
   });
 
-  advertisement.on('stopped', function () {
+  advertisement.on('stopped', () => {
     console.log('%s Advertisement stopped.', timestamp());
     exit();
   });
@@ -169,8 +164,8 @@ function query(name, type) {
   if (!type) exit('Missing record type');
 
   // rrtype could be string (like TXT) or and int (like 16)
-  var rrtype = Number.isInteger(parseInt(type, 10)) ? parseInt(type, 10) : type;
-  var getRecord = void 0;
+  const rrtype = Number.isInteger(parseInt(type, 10)) ? parseInt(type, 10) : type;
+  let getRecord;
 
   // wrap to check for validation errors
   try {
@@ -179,20 +174,17 @@ function query(name, type) {
     exit(err);
   }
 
-  getRecord.then(function (result) {
-    console.log('Found record: ' + result.answer);
-  }).catch(function (err) {
-    exit('Record not found. \nReason: ' + err.message);
+  getRecord.then(result => {
+    console.log(`Found record: ${result.answer}`);
+  }).catch(err => {
+    exit(`Record not found. \nReason: ${err.message}`);
   });
 }
 
-function address(hostname) {
-  var IPv = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'v4/v6';
-
+function address(hostname, IPv = 'v4/v6') {
   if (!hostname) exit('Missing hostname');
 
-  var getIPv4 = void 0,
-      getIPv6 = void 0;
+  let getIPv4, getIPv6;
 
   // wrap to check for validation errors
   try {
@@ -204,27 +196,27 @@ function address(hostname) {
 
   if (!getIPv4 && !getIPv6) exit('Invalid address type given: ' + IPv);
 
-  Promise.all([getIPv4, getIPv6]).then(function (results) {
-    var IPv4 = results[0];
-    var IPv6 = results[1];
+  Promise.all([getIPv4, getIPv6]).then(results => {
+    const IPv4 = results[0];
+    const IPv6 = results[1];
 
-    if (IPv4) console.log('Found IPv4 address: ' + IPv4);
-    if (IPv6) console.log('Found IPv6 address: ' + IPv6);
-  }).catch(function (err) {
-    exit('Address not found. \nReason: ' + err.message);
+    if (IPv4) console.log(`Found IPv4 address: ${IPv4}`);
+    if (IPv6) console.log(`Found IPv6 address: ${IPv6}`);
+  }).catch(err => {
+    exit(`Address not found. \nReason: ${err.message}`);
   });
 }
 
 function main(args) {
-  var commands = {
+  const commands = {
     browse: browseType,
     register: advertise,
-    advertise: advertise,
-    query: query,
-    address: address
+    advertise,
+    query,
+    address
   };
 
-  var command = args[2];
+  const command = args[2];
 
   if (!command || command === '-h' || command === '--help') showHelp();
   if (!(command in commands)) showHelp('Unknown command given');

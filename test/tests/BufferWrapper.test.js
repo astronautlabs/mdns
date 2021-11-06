@@ -3,6 +3,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 
@@ -14,62 +16,62 @@ describe('BufferWrapper', function() {
 
   describe('Buffer read/write aliases', function() {
     it('#readUInt8(): should return value and increment position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0x01]));
+      const wrapper = new BufferWrapper(Buffer.from([0x01]));
 
       expect(wrapper.readUInt8()).to.equal(0x01);
       expect(wrapper.tell()).to.equal(1);
     });
 
     it('#readUInt16BE(): should return value and increment position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0x01,0x02]));
+      const wrapper = new BufferWrapper(Buffer.from([0x01,0x02]));
 
       expect(wrapper.readUInt16BE()).to.equal(0x0102);
       expect(wrapper.tell()).to.equal(2);
     });
 
     it('#readUInt32BE(): should return value and increment position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0x01,0x02,0x03,0x04]));
+      const wrapper = new BufferWrapper(Buffer.from([0x01,0x02,0x03,0x04]));
 
       expect(wrapper.readUInt32BE()).to.equal(0x01020304);
       expect(wrapper.tell()).to.equal(4);
     });
 
     it('#readUIntBE(): should return value and increment position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0x01,0x02,0x03,0x04]));
+      const wrapper = new BufferWrapper(Buffer.from([0x01,0x02,0x03,0x04]));
 
       expect(wrapper.readUIntBE(4)).to.equal(0x01020304);
       expect(wrapper.tell()).to.equal(4);
     });
 
     it('#writeUInt8(): should write value and increment position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0]));
+      const wrapper = new BufferWrapper(Buffer.from([0]));
       wrapper.writeUInt8(0x04);
 
-      expect(wrapper.buffer).to.eql(new Buffer([0x04]));
+      expect(wrapper.buffer).to.eql(Buffer.from([0x04]));
       expect(wrapper.tell()).to.equal(1);
     });
 
     it('#writeUInt16BE(): should write value and increment position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0,0]));
+      const wrapper = new BufferWrapper(Buffer.from([0,0]));
       wrapper.writeUInt16BE(0x0405);
 
-      expect(wrapper.buffer).to.eql(new Buffer([0x04,0x05]));
+      expect(wrapper.buffer).to.eql(Buffer.from([0x04,0x05]));
       expect(wrapper.tell()).to.equal(2);
     });
 
     it('#writeUInt32BE(): should write value and increment position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0,0,0,0]));
+      const wrapper = new BufferWrapper(Buffer.from([0,0,0,0]));
       wrapper.writeUInt32BE(0x01020304);
 
-      expect(wrapper.buffer).to.eql(new Buffer([0x01,0x02,0x03,0x04]));
+      expect(wrapper.buffer).to.eql(Buffer.from([0x01,0x02,0x03,0x04]));
       expect(wrapper.tell()).to.equal(4);
     });
 
     it('#writeUIntBE(): should write value and increment position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0,0,0,0]));
+      const wrapper = new BufferWrapper(Buffer.from([0,0,0,0]));
       wrapper.writeUIntBE(0x01020304, 4);
 
-      expect(wrapper.buffer).to.eql(new Buffer([0x01,0x02,0x03,0x04]));
+      expect(wrapper.buffer).to.eql(Buffer.from([0x01,0x02,0x03,0x04]));
       expect(wrapper.tell()).to.equal(4);
     });
   });
@@ -78,7 +80,7 @@ describe('BufferWrapper', function() {
   describe('Other read/writes', function() {
     it('#readString(): should read utf8 string, increment position', function() {
       const str = 'generic string';
-      const wrapper = new BufferWrapper(new Buffer(str));
+      const wrapper = new BufferWrapper(Buffer.from(str));
 
       expect(wrapper.readString(str.length)).to.equal(str);
       expect(wrapper.tell()).to.equal(str.length);
@@ -86,52 +88,52 @@ describe('BufferWrapper', function() {
 
     it('#writeString(): should write utf8 string, increment position', function() {
       const str = 'generic string';
-      const wrapper = new BufferWrapper(new Buffer(str.length));
+      const wrapper = new BufferWrapper(Buffer.alloc(str.length));
       wrapper.writeString(str);
 
-      expect(wrapper.buffer).to.eql(new Buffer(str));
+      expect(wrapper.buffer).to.eql(Buffer.from(str));
       expect(wrapper.tell()).to.equal(str.length);
     });
 
     it('#read(): should read n bytes, increment position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0x01,0x02,0x03,0x04]));
+      const wrapper = new BufferWrapper(Buffer.from([0x01,0x02,0x03,0x04]));
 
-      expect(wrapper.read(4)).to.eql(new Buffer([0x01,0x02,0x03,0x04]));
+      expect(wrapper.read(4)).to.eql(Buffer.from([0x01,0x02,0x03,0x04]));
       expect(wrapper.tell()).to.equal(4);
     });
 
     it('#add(): should add buffer, increment position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0,0,0,0]));
-      wrapper.add(new Buffer([0x01,0x02,0x03,0x04]));
+      const wrapper = new BufferWrapper(Buffer.from([0,0,0,0]));
+      wrapper.add(Buffer.from([0x01,0x02,0x03,0x04]));
 
-      expect(wrapper.buffer).to.eql(new Buffer([0x01,0x02,0x03,0x04]));
+      expect(wrapper.buffer).to.eql(Buffer.from([0x01,0x02,0x03,0x04]));
       expect(wrapper.tell()).to.equal(4);
     });
 
     it('#remaining(): should show number of bytes til end of buffer', function() {
-      const wrapper = new BufferWrapper(new Buffer([0,0,0,0]));
+      const wrapper = new BufferWrapper(Buffer.from([0,0,0,0]));
 
       expect(wrapper.remaining()).to.equal(4);
     });
 
     it('#skip(): should skip n bytes, increment position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0,0,0,0]));
+      const wrapper = new BufferWrapper(Buffer.from([0,0,0,0]));
       wrapper.skip(2);
 
       expect(wrapper.tell()).to.equal(2);
     });
 
     it('#trim(): should trim/return internal buffer up to position', function() {
-      const wrapper = new BufferWrapper(new Buffer([0x01,0x02,0x03,0x04]));
+      const wrapper = new BufferWrapper(Buffer.from([0x01,0x02,0x03,0x04]));
       wrapper.skip(2);
 
-      expect(wrapper.unwrap()).to.eql(new Buffer([0x01,0x02]));
+      expect(wrapper.unwrap()).to.eql(Buffer.from([0x01,0x02]));
     });
   });
 
 
   describe('#_checkLength()', function() {
-    const wrapper = new BufferWrapper(new Buffer([0,0,0,0]));
+    const wrapper = new BufferWrapper(Buffer.from([0,0,0,0]));
     sinon.stub(wrapper, '_grow');
 
     beforeEach(function() {
@@ -157,7 +159,7 @@ describe('BufferWrapper', function() {
 
   describe('#_grow()', function() {
     it('should add n sized buffer to end', function() {
-      const wrapper = new BufferWrapper(new Buffer(0));
+      const wrapper = new BufferWrapper(Buffer.alloc(0));
       wrapper._grow(5);
 
       expect(wrapper.buffer.length).to.equal(5);
@@ -169,16 +171,16 @@ describe('BufferWrapper', function() {
     describe('should use Buffer.indexOf in newer versions of node', function() {
       it('should find index', function() {
         const wrapper = new BufferWrapper();
-        wrapper.add(new Buffer([0,1,2,3,4]));
+        wrapper.add(Buffer.from([0,1,2,3,4]));
 
-        expect(wrapper.indexOf(new Buffer([2,3]))).to.equal(2);
+        expect(wrapper.indexOf(Buffer.from([2,3]))).to.equal(2);
       });
 
       it('should return -1 if not found', function() {
         const wrapper = new BufferWrapper();
-        wrapper.add(new Buffer([0,1,2,3,4]));
+        wrapper.add(Buffer.from([0,1,2,3,4]));
 
-        expect(wrapper.indexOf(new Buffer([5,6]))).to.equal(-1);
+        expect(wrapper.indexOf(Buffer.from([5,6]))).to.equal(-1);
       });
     });
 
@@ -197,16 +199,16 @@ describe('BufferWrapper', function() {
 
       it('should find index', function() {
         const wrapper = new BufferWrapper();
-        wrapper.add(new Buffer([0,1,2,3,4]));
+        wrapper.add(Buffer.from([0,1,2,3,4]));
 
-        expect(wrapper.indexOf(new Buffer([2,3]))).to.equal(2);
+        expect(wrapper.indexOf(Buffer.from([2,3]))).to.equal(2);
       });
 
       it('should return -1 if not found', function() {
         const wrapper = new BufferWrapper();
-        wrapper.add(new Buffer([0,1,2,3,4]));
+        wrapper.add(Buffer.from([0,1,2,3,4]));
 
-        expect(wrapper.indexOf(new Buffer([5,6]))).to.equal(-1);
+        expect(wrapper.indexOf(Buffer.from([5,6]))).to.equal(-1);
       });
     });
   });

@@ -3,6 +3,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 
@@ -13,7 +15,7 @@ const TimerContainer = require(dir + '/TimerContainer');
 describe('TimerContainer', function() {
 
   describe('.set', function() {
-    it('should add a timer that fires on the context', sinon.test(function() {
+    it('should add a timer that fires on the context', test(function() {
       const context = {fn: sinon.stub()};
       const timers = new TimerContainer(context);
 
@@ -26,7 +28,7 @@ describe('TimerContainer', function() {
       expect(context.fn).to.have.been.called;
     }));
 
-    it('should have name be optional', sinon.test(function() {
+    it('should have name be optional', test(function() {
       const context = {fn: sinon.stub()};
       const timers = new TimerContainer(context);
 
@@ -36,7 +38,7 @@ describe('TimerContainer', function() {
       expect(context.fn).to.have.been.called;
     }));
 
-    it('should clear old timers with the same name', sinon.test(function() {
+    it('should clear old timers with the same name', test(function() {
       const context = {fn: sinon.stub()};
       const timers = new TimerContainer(context);
 
@@ -53,7 +55,7 @@ describe('TimerContainer', function() {
 
 
   describe('.setLazy', function() {
-    it('should add a timer that fires on the context', sinon.test(function() {
+    it('should add a timer that fires on the context', test(function() {
       const context = {fn: sinon.stub()};
       const timers = new TimerContainer(context);
 
@@ -66,7 +68,7 @@ describe('TimerContainer', function() {
       expect(context.fn).to.have.been.called;
     }));
 
-    it('should have name be optional', sinon.test(function() {
+    it('should have name be optional', test(function() {
       const context = {fn: sinon.stub()};
       const timers = new TimerContainer(context);
 
@@ -76,7 +78,7 @@ describe('TimerContainer', function() {
       expect(context.fn).to.have.been.called;
     }));
 
-    it('should clear old timers with the same name', sinon.test(function() {
+    it('should clear old timers with the same name', test(function() {
       const context = {fn: sinon.stub()};
       const timers = new TimerContainer(context);
 
@@ -92,7 +94,7 @@ describe('TimerContainer', function() {
       expect(timers.has('name')).to.be.false;
     }));
 
-    it('should NOT run fn if the timer goes off late', sinon.test(function() {
+    it('should NOT run fn if the timer goes off late', test(function() {
       const RewiredTimerContainer = rewire(dir + '/TimerContainer');
 
       const now = sinon.stub();
@@ -115,7 +117,7 @@ describe('TimerContainer', function() {
 
 
   describe('.clear', function() {
-    it('should clear old timers with the same name', sinon.test(function() {
+    it('should clear old timers with the same name', test(function() {
       const context = {fn: sinon.stub()};
       const timers = new TimerContainer(context);
 

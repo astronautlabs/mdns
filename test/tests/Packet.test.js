@@ -6,8 +6,9 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
-
 const dir = process['test-dir'] || '../../src';
 
 const BufferWrapper  = require(dir + '/BufferWrapper');
@@ -30,7 +31,7 @@ describe('Packet', function() {
       expect((new Packet()).isEmpty()).to.be.true;
     });
 
-    it('should create a packet from a given buffer', sinon.test(function() {
+    it('should create a packet from a given buffer', test(function() {
       this.stub(Packet.prototype, 'parseBuffer');
       const fakebuffer = {};
       const packet = new Packet(fakebuffer);
@@ -38,7 +39,7 @@ describe('Packet', function() {
       expect(packet.parseBuffer).to.have.been.calledWith(fakebuffer);
     }));
 
-    it('should make .isInvalid() false if parsing fails', sinon.test(function() {
+    it('should make .isInvalid() false if parsing fails', test(function() {
       this.stub(Packet.prototype, 'parseBuffer').throws();
       this.stub(Packet.prototype, 'isValid').returns(true);
       const fakebuffer = {};
@@ -51,7 +52,7 @@ describe('Packet', function() {
 
   describe('#parseHeader', function() {
     it('should parse out header fields', function() {
-      const buf = new Buffer([0, 37, 0, 0, 0, 4, 0, 3, 0, 2, 0, 1]);
+      const buf = Buffer.from([0, 37, 0, 0, 0, 4, 0, 3, 0, 2, 0, 1]);
       const wrapper = new BufferWrapper(buf);
 
       const header = Packet.prototype.parseHeader(wrapper);

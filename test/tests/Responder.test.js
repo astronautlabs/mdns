@@ -5,6 +5,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -57,7 +59,7 @@ describe('Responder constructor', function() {
     it('should return a new Responder FSM', function() {
       const records = [SRV];
 
-      expect((new Responder(intf, records)).transition).to.be.a.function;
+      expect((new Responder(intf, records)).transition).to.be.a('function');
     });
   });
 });
@@ -116,18 +118,18 @@ describe('Responder', function() {
 
   beforeEach(function() {
     // resets stub fns and removes all listeners
-    intf.reset();
+    intf.resetHistory();
     intf.cache.clear();
 
-    response.reset();
-    unicast.reset();
-    goodbye.reset();
-    probe.reset();
+    response.resetHistory();
+    unicast.resetHistory();
+    goodbye.resetHistory();
+    probe.resetHistory();
 
-    MulticastConstructor.reset();
-    UnicastConstructor.reset();
-    GoodbyeConstructor.reset();
-    ProbeConstructor.reset();
+    MulticastConstructor.resetHistory();
+    UnicastConstructor.resetHistory();
+    GoodbyeConstructor.resetHistory();
+    ProbeConstructor.resetHistory();
   });
 
 
@@ -137,6 +139,7 @@ describe('Responder', function() {
       responder.start();
 
       expect(responder.state).to.equal('probing');
+      responder.stop();
     });
   });
 
@@ -222,6 +225,7 @@ describe('Responder', function() {
       expect(responder.transition).to.have.been
         .calledWith('stopped', 'fake error obj')
         .calledOn(responder);
+      responder.stop();
     });
   });
 
@@ -329,7 +333,7 @@ describe('Responder', function() {
         .calledWithMatch([PTR_1, SRV_1, TXT_1, NSEC_1]);
     });
 
-    it('should remove records that shouldn\'t be goodbyed', sinon.test(function() {
+    it('should remove records that shouldn\'t be goodbyed', test(function() {
       const responder = new Responder(intf, records, bridgeable);
 
       this.stub(SRV_1, 'canGoodbye').returns(false);
@@ -654,8 +658,8 @@ describe('Responder', function() {
     sinon.stub(responder, '_sendAnnouncement');
 
     beforeEach(function() {
-      responder.transition.reset();
-      responder._sendAnnouncement.reset();
+      responder.transition.resetHistory();
+      responder._sendAnnouncement.resetHistory();
     });
 
     it('should do nothing with empty answer packets', function() {
@@ -723,10 +727,11 @@ describe('Responder', function() {
       // should be announcing:
       expect(MulticastConstructor).to.have.been.called;
       expect(responder.state).to.equal('responding');
+      responder.stop();
     });
 
 
-    it('should hold probes for 5s if too many conflicts', sinon.test(function() {
+    it('should hold probes for 5s if too many conflicts', test(function() {
       const responder = new Responder(intf, records, bridgeable);
 
       // add a bunch of conflicts
@@ -743,10 +748,11 @@ describe('Responder', function() {
 
       probe.emit('complete');
       expect(responder.state).to.equal('responding');
+      responder.stop();
     }));
 
 
-    it('should reset conflict count after 15s', sinon.test(function() {
+    it('should reset conflict count after 15s', test(function() {
       // need to re-require within sinon sandbox for Date.now() to get replaced
       const ReloadedResponder = require(dir + '/Responder');
       const responder = new ReloadedResponder(intf, records, bridgeable);
@@ -757,6 +763,7 @@ describe('Responder', function() {
 
       this.clock.tick(16 * 1000);
       expect(responder._conflicts.count()).to.equal(0);
+      responder.stop();
     }));
 
 
@@ -778,6 +785,7 @@ describe('Responder', function() {
 
       expect(SRV_1.name).to.equal('Instance (3)' + '.' + service);
       expect(PTR_1.PTRDName).to.equal('Instance (3)' + '.' + service);
+      responder.stop();
     });
 
 
@@ -788,6 +796,7 @@ describe('Responder', function() {
       probe.emit('complete', true); // <- ended early
 
       expect(MulticastConstructor).to.not.have.been.called;
+      responder.stop();
     });
 
 
@@ -803,6 +812,7 @@ describe('Responder', function() {
       });
 
       expect(probe.start).to.have.been.calledTwice;
+      responder.stop();
     });
 
 
@@ -814,6 +824,7 @@ describe('Responder', function() {
         expect(goodbye.start).to.not.have.been.called;
         done();
       });
+      responder.stop();
     });
 
 
@@ -830,6 +841,7 @@ describe('Responder', function() {
       });
 
       goodbye.emit('stopped');
+      responder.stop();
     });
 
 
@@ -844,6 +856,7 @@ describe('Responder', function() {
 
       expect(response.add).to.have.been
         .calledWithMatch([PTR_1, SRV_1, TXT_1, NSEC_1]);
+      responder.stop();
     });
 
 
@@ -864,6 +877,7 @@ describe('Responder', function() {
 
       expect(response.add).to.have.been
         .calledWithMatch([SRV_1, TXT_1, NSEC_1]);
+      responder.stop();
     });
 
 
@@ -881,6 +895,7 @@ describe('Responder', function() {
       intf.emit('query', queryPacket);
 
       expect(response.add).to.have.been.calledWithMatch([SRV_1, TXT_1, NSEC_1]);
+      responder.stop();
     });
 
 
@@ -902,6 +917,7 @@ describe('Responder', function() {
 
       // conflict causes it to re-probe
       expect(responder.state).to.equal('probing');
+      responder.stop();
     });
 
 

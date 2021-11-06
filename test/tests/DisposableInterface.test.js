@@ -3,6 +3,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -52,8 +54,8 @@ describe('DisposableInterface', function() {
   DisposableInterface.__set__('os', osStub);
 
   beforeEach(function() {
-    socket.reset();
-    dgram.createSocket.reset();
+    socket.resetHistory();
+    dgram.createSocket.resetHistory();
   });
 
   describe('::create()', function() {
@@ -133,7 +135,7 @@ describe('DisposableInterface', function() {
 
     it('should _onError when socket closes unexpectedly', function(done) {
       const intf = DisposableInterface.create('Wi-Fi');
-      sinon.stub(intf, '_onError', () => done());
+      sinon.stub(intf, '_onError').callsFake(() => done());
 
       intf._bindSocket(IPv4).then(() => socket.emit('close'));
 
@@ -142,7 +144,7 @@ describe('DisposableInterface', function() {
 
     it('should _onError on any other unexpected error', function(done) {
       const intf = DisposableInterface.create('Wi-Fi');
-      sinon.stub(intf, '_onError', () => done());
+      sinon.stub(intf, '_onError').callsFake(() => done());
 
       intf._bindSocket(IPv4).then(() => socket.emit('error'));
 
@@ -151,7 +153,7 @@ describe('DisposableInterface', function() {
 
     it('should _onMessage when socket receives a message', function(done) {
       const intf = DisposableInterface.create('Wi-Fi');
-      sinon.stub(intf, '_onMessage', () => done());
+      sinon.stub(intf, '_onMessage').callsFake(() => done());
 
       intf._bindSocket(IPv4).then(() => socket.emit('message'));
 

@@ -4,6 +4,8 @@ const chai      = require('chai');
 const expect    = chai.expect;
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 
@@ -18,7 +20,7 @@ describe('EventEmitter', function() {
       expect((new EventEmitter()).emit).to.be.a('function');
     });
 
-    it('should allow options to set max # of listeners', sinon.test(function() {
+    it('should allow options to set max # of listeners', test(function() {
       this.spy(EventEmitter.prototype, 'setMaxListeners');
 
       expect((new EventEmitter()).setMaxListeners).to.be.calledWith(0);

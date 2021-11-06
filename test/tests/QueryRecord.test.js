@@ -5,6 +5,8 @@ const chai      = require('chai');
 const expect    = chai.expect;
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';

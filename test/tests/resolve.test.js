@@ -3,6 +3,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -42,9 +44,9 @@ describe('resolve', function() {
   const SRV  = new ResourceRecord.SRV({name: 'SRV', target: 'Target', port: 9999});
 
   beforeEach(function() {
-    intf.reset();
-    query.reset();
-    resolver.reset();
+    intf.resetHistory();
+    query.resetHistory();
+    resolver.resetHistory();
   });
 
 
