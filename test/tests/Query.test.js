@@ -2,6 +2,8 @@ const chai      = require('chai');
 const expect    = chai.expect;
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -25,8 +27,8 @@ describe('Query', function() {
 
   // reset all stubbed functions after each test
   afterEach(function() {
-    intf.reset();
-    offswitch.reset();
+    intf.resetHistory();
+    offswitch.resetHistory();
     intf.cache.clear();
   });
 
@@ -82,9 +84,10 @@ describe('Query', function() {
 
       expect(query._onAnswer).to.have.been.called;
       expect(query._onQuery).to.have.been.called;
+      query.stop();
     });
 
-    it('should queue send for short delay & set timeout', sinon.test(function() {
+    it('should queue send for short delay & set timeout', test(function() {
       const query = new Query(intf, offswitch);
       sinon.stub(query, '_checkCache');
       sinon.stub(query, '_send');
@@ -157,7 +160,7 @@ describe('Query', function() {
 
 
   describe('#_send()', function() {
-    it('should add known answers and send packet', function() {
+    it('should add known answers and send packet', test(function() {
       const query = new Query(intf, offswitch);
 
       const packet = new Packet();
@@ -169,18 +172,18 @@ describe('Query', function() {
       query._send();
 
       expect(intf.send).to.have.been.calledWith(packet);
-    });
+    }));
 
-    it('should not send packets if they are empty', function() {
+    it('should not send packets if they are empty', test(function() {
       const query = new Query(intf, offswitch);
       sinon.stub(query, '_addKnownAnswers').returns(new Packet());
 
       query._send();
 
       expect(intf.send).to.not.have.been.called;
-    });
+    }));
 
-    it('should make next packet early and queue next send', function() {
+    it('should make next packet early and queue next send', test(function() {
       const query = new Query(intf, offswitch);
 
       sinon.stub(query, '_makePacket');
@@ -190,7 +193,7 @@ describe('Query', function() {
 
       expect(query._makePacket).to.have.been.called;
       expect(query._next).to.equal(1000 * 2);
-    });
+    }));
 
     it('should not queue further sends for non-continuous queries', function() {
       const query = new Query(intf, offswitch);
@@ -238,6 +241,7 @@ describe('Query', function() {
 
       intf.cache.emit('expired', answer);
       expect(query._knownAnswers.size).to.equal(0);
+      query.stop();
     });
   });
 
@@ -279,7 +283,7 @@ describe('Query', function() {
       query._onAnswer(packet);
     });
 
-    it('should add shared records to known answer list instead', function(done) {
+    it('should add shared records to known answer list instead', test(function(done) {
       const query = new Query(intf, offswitch);
 
       const packet = new Packet();
@@ -293,7 +297,7 @@ describe('Query', function() {
 
       query.add({name: 'Shared'});
       query._onAnswer(packet);
-    });
+    }));
 
     it('should stop on first answer if query is non continuous', function() {
       const query = new Query(intf, offswitch);
@@ -439,6 +443,7 @@ describe('Query', function() {
       expect(query.emit).to.have.been
         .calledWith('answer', PTR)
         .calledWith('answer', SRV);
+      query.stop();
     });
 
     it('should do nothing if no answers are found', function() {
@@ -456,7 +461,7 @@ describe('Query', function() {
 
 
   describe('#_startTimer()', function() {
-    it('should timeout and stop query if not answered', sinon.test(function() {
+    it('should timeout and stop query if not answered', test(function() {
       const query = new Query(intf, offswitch);
       sinon.stub(query, 'emit');
 

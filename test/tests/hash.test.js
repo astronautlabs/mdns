@@ -3,6 +3,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 
@@ -50,7 +52,7 @@ describe('hash', function() {
     });
 
     it('should handle buffers', function() {
-      const input = new Buffer('123');
+      const input = Buffer.from('123');
       const expected = '{"type":"Buffer","data":[49,50,51]}';
 
       expect(stringify(input)).to.equal(expected);
@@ -80,8 +82,8 @@ describe('hash', function() {
     });
 
     it('should work with buffers too', function() {
-      expect(hash('foo', new Buffer('123')))
-        .to.equal(hash('foo', new Buffer('123')));
+      expect(hash('foo', Buffer.from('123')))
+        .to.equal(hash('foo', Buffer.from('123')));
     });
   });
 

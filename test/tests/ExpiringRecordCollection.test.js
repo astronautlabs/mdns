@@ -1,9 +1,9 @@
-const _ = require('lodash');
-
 const chai      = require('chai');
 const expect    = chai.expect;
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon, {useFakeTimers: true});
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -22,16 +22,18 @@ describe('ExpiringRecordCollection', function() {
   const PTR   = new ResourceRecord.PTR({name: 'PTR', ttl: 10});
 
 
-  describe('#has()', sinon.test(function() {
+  describe('#has()', test(function() {
     const collection = new ExpiringRecordCollection([TXT]);
 
-    it('should return true if collection already has record', function() {
+    it('should return true if collection already has record', test(function() {
       expect(collection.has(TXT)).to.be.true;
-    });
+      this.clock.tick(5_000);
+    }));
 
-    it('should return false if it does not have record', function() {
+    it('should return false if it does not have record', test(function() {
       expect(collection.has(PTR)).to.be.false;
-    });
+      this.clock.tick(5_000);
+    }));
   }));
 
 
@@ -70,31 +72,32 @@ describe('ExpiringRecordCollection', function() {
 
 
   describe('#addEach()', function() {
-    it('should add each record', function() {
+    it('should add each record', test(function() {
       const collection = new ExpiringRecordCollection();
       collection.addEach([TXT, PTR]);
 
       expect(collection.has(TXT)).to.be.true;
       expect(collection.has(PTR)).to.be.true;
-    });
+      this.clock.tick(5_000);
+    }));
   });
 
 
   describe('#hasAddedWithin()', function() {
-    it('should be false if record does not exist yet', function() {
+    it('should be false if record does not exist yet', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
-
+      this.clock.tick(5 * 1000);
       expect(collection.hasAddedWithin(TXT, 1)).to.be.false;
-    });
+    }));
 
-    it('should be true if has been added in range', sinon.test(function() {
+    it('should be true if has been added in range', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
       this.clock.tick(5 * 1000);
 
       expect(collection.hasAddedWithin(PTR, 6)).to.be.true;
     }));
 
-    it('should be false if hasn\'t been added in range', sinon.test(function() {
+    it('should be false if hasn\'t been added in range', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
       this.clock.tick(5 * 1000);
 
@@ -104,12 +107,13 @@ describe('ExpiringRecordCollection', function() {
 
 
   describe('#get()', function() {
-    it('should return undefined if record does not exist', function() {
+    it('should return undefined if record does not exist', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
+      this.clock.tick(3 * 1000);
       expect(collection.get(TXT)).to.be.undefined;
-    });
+    }));
 
-    it('should return clone of record with adjusted TTL', sinon.test(function() {
+    it('should return clone of record with adjusted TTL', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
       this.clock.tick(3 * 1000);
 
@@ -129,13 +133,14 @@ describe('ExpiringRecordCollection', function() {
       expect(collection.size).to.equal(0);
     });
 
-    it('should remove record id from related group set', function() {
+    it('should remove record id from related group set', test(function() {
       const collection = new ExpiringRecordCollection([SRV_1, SRV_2]);
       collection.delete(SRV_1);
+      this.clock.tick(3 * 1000);
 
       expect(collection.size).to.equal(1);
       expect(collection._related[SRV_1.namehash].size).to.equal(1);
-    });
+    }));
 
     it('should do nothing if collection does not have record', function() {
       const collection = new ExpiringRecordCollection();
@@ -168,25 +173,25 @@ describe('ExpiringRecordCollection', function() {
 
 
   describe('#setToExpire()', function() {
-    it('should clear timers and delete in 1s', sinon.test(function() {
+    it('should clear timers and delete in 1s', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
 
       collection.setToExpire(PTR);
-      this.clock.tick(1 * 1000);
+      this.clock.tick(1000);
 
       expect(collection.size).to.equal(0);
     }));
 
-    it('should do nothing if it does not have the record', sinon.test(function() {
+    it('should do nothing if it does not have the record', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
 
       collection.setToExpire(TXT);
-      this.clock.tick(1 * 1000);
+      this.clock.tick(1000);
 
       expect(collection.size).to.equal(1);
     }));
 
-    it('should not clear existing delete timers', sinon.test(function() {
+    it('should not clear existing delete timers', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
 
       collection.setToExpire(PTR);
@@ -201,7 +206,7 @@ describe('ExpiringRecordCollection', function() {
 
 
   describe('#flushRelated()', function() {
-    it('should expire related records added > 1s ago', sinon.test(function() {
+    it('should expire related records added > 1s ago', test(function() {
       const collection = new ExpiringRecordCollection([SRV_1, TXT, PTR]);
       sinon.stub(collection, 'setToExpire');
 
@@ -211,7 +216,7 @@ describe('ExpiringRecordCollection', function() {
       expect(collection.setToExpire).to.have.been.calledWith(SRV_1);
     }));
 
-    it('should not expire records added < 1s ago', sinon.test(function() {
+    it('should not expire records added < 1s ago', test(function() {
       const collection = new ExpiringRecordCollection([SRV_1, TXT, PTR]);
       sinon.stub(collection, 'setToExpire');
 
@@ -221,7 +226,7 @@ describe('ExpiringRecordCollection', function() {
       expect(collection.setToExpire).to.not.have.been.called;
     }));
 
-    it('should a record should not flush itself', sinon.test(function() {
+    it('should a record should not flush itself', test(function() {
       const collection = new ExpiringRecordCollection([SRV_1, TXT, PTR]);
       sinon.stub(collection, 'setToExpire');
 
@@ -231,7 +236,7 @@ describe('ExpiringRecordCollection', function() {
       expect(collection.setToExpire).to.not.have.been.called;
     }));
 
-    it('should *not* flush with non-unique records', sinon.test(function() {
+    it('should *not* flush with non-unique records', test(function() {
       const collection = new ExpiringRecordCollection([SRV_1, TXT, PTR]);
       sinon.stub(collection, 'setToExpire');
 
@@ -243,13 +248,15 @@ describe('ExpiringRecordCollection', function() {
 
 
   describe('#toArray()', function() {
-    it('should return array of its records', function() {
-      expect((new ExpiringRecordCollection([TXT])).toArray()).to.eql([TXT]);
-    });
+    it('should return array of its records', test(function() {
+      let expiringRecordCollection = new ExpiringRecordCollection([TXT]);
+      expect(expiringRecordCollection.toArray()).to.eql([TXT]);
+      this.clock.tick(10_000);
+    }));
   });
 
 
-  describe('#hasConflictWith()', sinon.test(function() {
+  describe('#hasConflictWith()', test(function() {
     const collection = new ExpiringRecordCollection([SRV_1]);
 
     it('should return true if collection has a conflicting record', function() {
@@ -271,20 +278,22 @@ describe('ExpiringRecordCollection', function() {
 
 
   describe('#_getRelatedRecords()', function() {
-    it('should return an array of records with the same name', function() {
+    it('should return an array of records with the same name', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
       expect(collection._getRelatedRecords(PTR.namehash)).to.eql([PTR]);
-    });
+      this.clock.tick(5_000);
+    }));
 
-    it('should return an empty array if no related records exist', function() {
+    it('should return an empty array if no related records exist', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
       expect(collection._getRelatedRecords('???')).to.eql([]);
-    });
+      this.clock.tick(5_000);
+    }));
   });
 
 
   describe('#_filterTTL()', function() {
-    it('should only return records with TTLs > cutoff', sinon.test(function() {
+    it('should only return records with TTLs > cutoff', test(function() {
       const collection = new ExpiringRecordCollection([SRV_1]);
 
       this.clock.tick(8 * 1000);
@@ -294,14 +303,15 @@ describe('ExpiringRecordCollection', function() {
       expect(results[0].hash).to.equal(SRV_2.hash);
     }));
 
-    it('should return an array of clones', function() {
+    it('should return an array of clones', test(function() {
       const collection = new ExpiringRecordCollection([SRV_1]);
       const results = collection._filterTTL([SRV_1], 0.50);
 
       expect(results).to.not.equal([SRV_1]);
-    });
+      this.clock.tick(5_000);
+    }));
 
-    it('should subtract elapsed TTL for records', sinon.test(function() {
+    it('should subtract elapsed TTL for records', test(function() {
       const collection = new ExpiringRecordCollection([SRV_1]);
 
       this.clock.tick(4 * 1000);
@@ -314,7 +324,7 @@ describe('ExpiringRecordCollection', function() {
 
 
   describe('#_schedule()', function() {
-    it('should schedule expiration and reissue timers', sinon.test(function() {
+    it('should schedule expiration and reissue timers', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
       sinon.stub(collection, 'emit');
 

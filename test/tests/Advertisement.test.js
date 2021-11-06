@@ -3,6 +3,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -60,9 +62,9 @@ describe('Advertisement', function() {
   const sleep = Advertisement.__get__('sleep');
 
   beforeEach(function() {
-    intf.reset();
-    responder.reset();
-    ResponderConstructor.reset();
+    intf.resetHistory();
+    responder.resetHistory();
+    ResponderConstructor.resetHistory();
 
     // reset info shared between multiple responders (sleep)
     // otherwise it would slowly accumulate listeners from each test
@@ -129,7 +131,7 @@ describe('Advertisement', function() {
       sinon.stub(ad, '_getDefaultID').returns(Promise.resolve());
       sinon.stub(ad, '_advertiseHostname').returns(Promise.resolve());
 
-      sinon.stub(ad, '_advertiseService', () => {
+      sinon.stub(ad, '_advertiseService').callsFake(() => {
         expect(intf.bind).to.have.been.called;
         done();
       });
@@ -256,7 +258,7 @@ describe('Advertisement', function() {
 
       sinon.stub(ad, '_getDefaultID').returns(Promise.resolve());
       sinon.stub(ad, '_advertiseHostname').returns(Promise.resolve());
-      sinon.stub(ad, '_advertiseService', () => complete());
+      sinon.stub(ad, '_advertiseService').callsFake(() => complete());
 
       ad.start();
       sleep.emit('wake');

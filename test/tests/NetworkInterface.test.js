@@ -5,6 +5,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -199,8 +201,8 @@ describe('NetworkInterface', function() {
     });
 
     beforeEach(function() {
-      socket.reset();
-      dgram.createSocket.reset();
+      socket.resetHistory();
+      dgram.createSocket.resetHistory();
     });
 
     it('should create IPv4 socket and resolve when bound', function(done) {
@@ -242,7 +244,7 @@ describe('NetworkInterface', function() {
 
     it('should _onError when socket closes unexpectedly', function(done) {
       const intf = new NetworkInterface();
-      sinon.stub(intf, '_onError', () => done());
+      sinon.stub(intf, '_onError').callsFake(() => done());
 
       intf._bindSocket().then(() => {
         socket.emit('close');
@@ -253,7 +255,7 @@ describe('NetworkInterface', function() {
 
     it('should _onError on socket errors', function(done) {
       const intf = new NetworkInterface();
-      sinon.stub(intf, '_onError', () => done());
+      sinon.stub(intf, '_onError').callsFake(() => done());
 
       intf._bindSocket().then(() => {
         socket.emit('error');
@@ -264,7 +266,7 @@ describe('NetworkInterface', function() {
 
     it('should _onMessage when socket receives a message', function(done) {
       const intf = new NetworkInterface();
-      sinon.stub(intf, '_onMessage', () => done());
+      sinon.stub(intf, '_onMessage').callsFake(() => done());
 
       intf._bindSocket();
       socket.emit('message', 'fake msg', {fake: 'rinfo'});
@@ -273,7 +275,7 @@ describe('NetworkInterface', function() {
 
 
   describe('#_addToCache()', function() {
-    it('should add records to cache & flush unique records', function() {
+    it('should add records to cache & flush unique records', test(function() {
       const intf = new NetworkInterface();
 
       const unique = new ResourceRecord.TXT({name: 'TXT'});
@@ -296,7 +298,8 @@ describe('NetworkInterface', function() {
         .calledTwice
         .calledWith(unique)
         .calledWith(shared);
-    });
+      this.clock.tick(1_000);
+    }));
   });
 
 
@@ -318,7 +321,7 @@ describe('NetworkInterface', function() {
       PacketConstructor.resetBehavior();
     });
 
-    it('should emit answer event on answer messages', function(done) {
+    it('should emit answer event on answer messages', test(function(done) {
       const intf = new NetworkInterface();
 
       const answerPacket = new Packet();
@@ -333,9 +336,9 @@ describe('NetworkInterface', function() {
       });
 
       intf._onMessage(msg, rinfo);
-    });
+    }));
 
-    it('should emit probe event on probe messages', function(done) {
+    it('should emit probe event on probe messages', test(function(done) {
       const intf = new NetworkInterface();
 
       const probePacket = new Packet();
@@ -350,7 +353,7 @@ describe('NetworkInterface', function() {
       });
 
       intf._onMessage(msg, rinfo);
-    });
+    }));
 
     it('should emit query event on query messages', function(done) {
       const intf = new NetworkInterface();
@@ -404,7 +407,7 @@ describe('NetworkInterface', function() {
 
 
   describe('#hasRecentlySent()', function() {
-    it('should be true if recently sent / false if not', sinon.test(function() {
+    it('should be true if recently sent / false if not', test(function() {
       const intf = new NetworkInterface();
       const SRV  = new ResourceRecord.SRV({name: 'SRV'});
 
@@ -431,8 +434,8 @@ describe('NetworkInterface', function() {
 
     beforeEach(function() {
       intf._isBound = true;
-      callback.reset();
-      socket.reset();
+      callback.resetHistory();
+      socket.resetHistory();
       socket.send.resetBehavior();
       socket.send.yields();
     });
@@ -520,7 +523,7 @@ describe('NetworkInterface', function() {
       revert();
     });
 
-    it('should split packet and resend on EMSGSIZE', sinon.test(function() {
+    it('should split packet and resend on EMSGSIZE', test(function() {
       const err = new Error();
       err.code = 'EMSGSIZE';
 

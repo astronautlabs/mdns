@@ -2,6 +2,8 @@ const chai      = require('chai');
 const expect    = chai.expect;
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -20,8 +22,8 @@ describe('Response.Multicast', function() {
   const offswitch = new Fake.EventEmitter();
 
   beforeEach(function() {
-    intf.reset();
-    offswitch.reset();
+    intf.resetHistory();
+    offswitch.resetHistory();
   });
 
 
@@ -53,7 +55,7 @@ describe('Response.Multicast', function() {
 
 
   describe('#start()', function() {
-    it('should make packet and _send() after delay', sinon.test(function() {
+    it('should make packet and _send() after delay', test(function() {
       const response = new Response.Multicast(intf, offswitch);
       sinon.stub(response, '_send');
 
@@ -63,7 +65,7 @@ describe('Response.Multicast', function() {
       expect(response._send).to.have.been.called;
     }));
 
-    it('should ignore delay if defensive is set', sinon.test(function() {
+    it('should ignore delay if defensive is set', test(function() {
       const response = new Response.Multicast(intf, offswitch);
       sinon.stub(response, '_send');
 
@@ -113,7 +115,7 @@ describe('Response.Multicast', function() {
       expect(response._next).to.equal(1000);
     });
 
-    it('should reschedule next response, doubling delay', sinon.test(function() {
+    it('should reschedule next response, doubling delay', test(function() {
       const response = new Response.Multicast(intf, offswitch);
       sinon.stub(response, '_suppressRecents');
       sinon.stub(response, '_makePacket');
@@ -263,8 +265,8 @@ describe('Response.Goodbye', function() {
   const offswitch = new Fake.EventEmitter();
 
   beforeEach(function() {
-    intf.reset();
-    offswitch.reset();
+    intf.resetHistory();
+    offswitch.resetHistory();
   });
 
 
@@ -313,8 +315,8 @@ describe('Response.Unicast', function() {
   const offswitch = new Fake.EventEmitter();
 
   beforeEach(function() {
-    intf.reset();
-    offswitch.reset();
+    intf.resetHistory();
+    offswitch.resetHistory();
   });
 
 
@@ -336,7 +338,7 @@ describe('Response.Unicast', function() {
 
 
   describe('#start()', function() {
-    it('should make packet and send after delay', sinon.test(function() {
+    it('should make packet and send after delay', test(function() {
       const response = new Response.Unicast(intf, offswitch);
       sinon.stub(response, '_makePacket');
 
@@ -348,7 +350,7 @@ describe('Response.Unicast', function() {
       expect(intf.send).to.have.been.called;
     }));
 
-    it('should ignore delay if defensive or legacy are set', sinon.test(function() {
+    it('should ignore delay if defensive or legacy are set', test(function() {
       const response = new Response.Unicast(intf, offswitch);
       sinon.stub(response, '_makePacket');
 

@@ -3,6 +3,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 
@@ -13,7 +15,7 @@ const ServiceType = rewire(dir + '/ServiceType');
 describe('ServiceType', function() {
 
   describe('#constructor()', function() {
-    it('should call this._fromString() on string', sinon.test(function() {
+    it('should call this._fromString() on string', test(function() {
       this.stub(ServiceType.prototype, '_fromString');
       this.stub(ServiceType.prototype, '_validate');
 
@@ -22,7 +24,7 @@ describe('ServiceType', function() {
       expect(type._fromString).to.have.been.called;
     }));
 
-    it('should call this._fromArray() on array', sinon.test(function() {
+    it('should call this._fromArray() on array', test(function() {
       this.stub(ServiceType.prototype, '_fromArray');
       this.stub(ServiceType.prototype, '_validate');
 
@@ -31,7 +33,7 @@ describe('ServiceType', function() {
       expect(type._fromArray).to.have.been.called;
     }));
 
-    it('should call this._fromObj() on object', sinon.test(function() {
+    it('should call this._fromObj() on object', test(function() {
       this.stub(ServiceType.prototype, '_fromObj');
       this.stub(ServiceType.prototype, '_validate');
 
@@ -40,7 +42,7 @@ describe('ServiceType', function() {
       expect(type._fromObj).to.have.been.called;
     }));
 
-    it('should convert multiple args to array form', sinon.test(function() {
+    it('should convert multiple args to array form', test(function() {
       this.stub(ServiceType.prototype, '_fromArray');
       this.stub(ServiceType.prototype, '_validate');
 
@@ -50,7 +52,7 @@ describe('ServiceType', function() {
       expect(type._fromArray).to.have.been.calledWithMatch(expected);
     }));
 
-    it('should throw an error for any other input type', sinon.test(function() {
+    it('should throw an error for any other input type', test(function() {
       expect(() => new ServiceType(99)).to.throw();
     }));
   });
@@ -214,9 +216,9 @@ describe('ServiceType', function() {
     });
 
     beforeEach(function() {
-      stub.serviceName.reset();
-      stub.protocol.reset();
-      stub.label.reset();
+      stub.serviceName.resetHistory();
+      stub.protocol.resetHistory();
+      stub.label.resetHistory();
     });
 
     it('should throw error if name is missing / is not a string', function() {

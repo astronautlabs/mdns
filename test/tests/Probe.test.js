@@ -3,6 +3,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -21,8 +23,8 @@ describe('Probe', function() {
   const offswitch = new Fake.EventEmitter();
 
   afterEach(function() {
-    intf.reset();
-    offswitch.reset();
+    intf.resetHistory();
+    offswitch.resetHistory();
   });
 
 
@@ -46,7 +48,7 @@ describe('Probe', function() {
 
 
   describe('#start()', function() {
-    it('should queue _send() after delay', sinon.test(function() {
+    it('should queue _send() after delay', test(function() {
       const probe = new Probe(intf, offswitch);
       sinon.stub(probe, '_send');
 
@@ -56,7 +58,7 @@ describe('Probe', function() {
       expect(probe._send).to.have.been.called;
     }));
 
-    it('should do nothing if already stopped', sinon.test(function() {
+    it('should do nothing if already stopped', test(function() {
       const probe = new Probe(intf, offswitch);
       sinon.stub(probe, '_send');
 
@@ -70,7 +72,7 @@ describe('Probe', function() {
 
 
   describe('#_restart()', function() {
-    it('should restart probing process', sinon.test(function() {
+    it('should restart probing process', test(function() {
       const probe = new Probe(intf, offswitch);
       sinon.spy(probe, '_complete');
 
@@ -129,7 +131,7 @@ describe('Probe', function() {
 
 
   describe('#_send()', function() {
-    it('should finish after 3 probes and 750ms', sinon.test(function() {
+    it('should finish after 3 probes and 750ms', test(function() {
       const probe = new Probe(intf, offswitch);
       sinon.spy(probe, '_complete');
 
@@ -298,7 +300,7 @@ describe('Probe', function() {
         .calledWith([B], [B]);
     });
 
-    it('should do restart when a probe conflict happens', sinon.test(function() {
+    it('should do restart when a probe conflict happens', test(function() {
       const probe = new Probe(intf, offswitch);
       probe.add([A, B]);
 
@@ -376,7 +378,7 @@ describe('Probe', function() {
     const A = new ResourceRecord.SRV({name: 'SRV', target: 'A'});
     const B = new ResourceRecord.SRV({name: 'SRV', target: 'B'});
 
-    it('should stop on conflicting answer packet', sinon.test(function() {
+    it('should stop on conflicting answer packet', test(function() {
       const probe = new Probe(intf, offswitch);
       sinon.spy(probe, 'emit');
 
@@ -399,7 +401,7 @@ describe('Probe', function() {
       expect(probe.emit).to.have.been.calledWith('conflict');
     }));
 
-    it('should pause and continue with a rogue probe conflict', sinon.test(function() {
+    it('should pause and continue with a rogue probe conflict', test(function() {
       const probe = new Probe(intf, offswitch);
       sinon.spy(probe, 'emit');
 

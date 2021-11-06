@@ -3,6 +3,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 
@@ -159,7 +161,7 @@ describe('misc', function() {
   describe('makeRawTXT()', function() {
     it('{key: "value"} => {key: Buffer<>}', function() {
       const obj = {key: 'value'};
-      const expected = {key: new Buffer('value')};
+      const expected = {key: Buffer.from('value')};
 
       expect(misc.makeRawTXT(obj)).to.eql(expected);
     });
@@ -187,8 +189,8 @@ describe('misc', function() {
     });
 
     it('{key: Buffer<>} => {key: Buffer<>}', function() {
-      const obj = {key: new Buffer('data')};
-      const expected = {key: new Buffer('data')};
+      const obj = {key: Buffer.from('data')};
+      const expected = {key: Buffer.from('data')};
 
       expect(misc.makeRawTXT(obj)).to.eql(expected);
     });
@@ -226,7 +228,7 @@ describe('misc', function() {
     });
 
     it('{key: Buffer<>} => {key: "string"}', function() {
-      const obj = {key: new Buffer('data')};
+      const obj = {key: Buffer.from('data')};
       const expected = {key: 'data'};
 
       expect(misc.makeReadableTXT(obj)).to.eql(expected);

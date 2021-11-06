@@ -2,6 +2,8 @@ const chai      = require('chai');
 const expect    = chai.expect;
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -24,7 +26,7 @@ describe('RecordCollection', function() {
       expect(collection._records).to.eql({});
     });
 
-    it('should call #addEach if given initial records', sinon.test(function() {
+    it('should call #addEach if given initial records', test(function() {
       this.stub(RecordCollection.prototype, 'addEach');
       const record = new ResourceRecord.SRV({name: '#1'});
       const collection = new RecordCollection([record]);

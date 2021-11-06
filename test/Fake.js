@@ -14,11 +14,11 @@ const DisposableInterface      = require(dir + '/DisposableInterface');
 
 
 // adds reset method that resets all of the instances stubbed methods
-function addReset(stub) {
-  stub.reset = function() {
+function addResetHistory (stub) {
+  stub.resetHistory = function() {
     _(stub).forOwn((value, key) => {
-      if (stub[key] && typeof stub[key].reset === 'function') {
-        stub[key].reset();
+      if (stub[key] && typeof stub[key].resetHistory === 'function') {
+        stub[key].resetHistory();
       }
     });
   };
@@ -48,9 +48,9 @@ function addEventEmitter(stub) {
   sinon.spy(stub, 'removeListenersCreatedBy');
 
   // add to reset: reset stubs *and* remove listeners
-  const original = stub.reset;
+  const original = stub.resetHistory;
 
-  stub.reset = function() {
+  stub.resetHistory = function() {
     original();
     stub.removeAllListeners();
   };
@@ -63,7 +63,7 @@ function addEventEmitter(stub) {
 
 function EventEmitterStub(props) {
   const stub = sinon.createStubInstance(EventEmitter);
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   // chainable methods
@@ -82,7 +82,7 @@ function EventEmitterStub(props) {
 
 function ExpRecCollectionStub(props) {
   const stub = sinon.createStubInstance(ExpiringRecordCollection);
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   addEventEmitter(stub);
@@ -92,7 +92,7 @@ function ExpRecCollectionStub(props) {
 
 function NetworkInterfaceStub(props) {
   const stub = sinon.createStubInstance(NetworkInterface);
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   stub.bind.returns(Promise.resolve());
@@ -104,7 +104,7 @@ function NetworkInterfaceStub(props) {
 
 function DisposableInterfaceStub(props) {
   const stub = sinon.createStubInstance(DisposableInterface);
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   stub.bind.returns(Promise.resolve());
@@ -116,7 +116,7 @@ function DisposableInterfaceStub(props) {
 
 function SocketStub(props) {
   const stub = sinon.createStubInstance(Socket);
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   addEventEmitter(stub);
@@ -126,7 +126,7 @@ function SocketStub(props) {
 
 function ProbeStub(props) {
   const stub = sinon.createStubInstance(Probe);
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   // chainable methods
@@ -143,7 +143,7 @@ function ProbeStub(props) {
 
 function QueryStub(props) {
   const stub = sinon.createStubInstance(Query);
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   // chainable methods
@@ -162,7 +162,7 @@ function QueryStub(props) {
 
 function MulticastResponseStub(props) {
   const stub = sinon.createStubInstance(Response.Multicast);
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   // chainable methods
@@ -180,7 +180,7 @@ function MulticastResponseStub(props) {
 
 function UnicastResponseStub(props) {
   const stub = sinon.createStubInstance(Response.Unicast);
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   // chainable methods
@@ -198,7 +198,7 @@ function UnicastResponseStub(props) {
 
 function GoodbyeStub(props) {
   const stub = sinon.createStubInstance(Response.Goodbye);
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   // chainable methods
@@ -226,7 +226,7 @@ function ServiceResolverStub(props) {
     off       : sinon.stub(),
   };
 
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   // chainable methods
@@ -252,7 +252,7 @@ function ResponderStub(props) {
     off       : sinon.stub(),
   };
 
-  addReset(stub);
+  addResetHistory(stub);
   addProps(stub, props);
 
   // chainable methods

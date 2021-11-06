@@ -5,6 +5,8 @@ const expect    = chai.expect;
 const rewire    = require('rewire');
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 const dir = process['test-dir'] || '../../src';
@@ -39,22 +41,22 @@ describe('ServiceResolver', function() {
   ServiceResolver.__set__('Query', QueryConstructor);
 
   beforeEach(function() {
-    intf.reset();
-    intf.cache.reset();
-    query.reset();
-    QueryConstructor.reset();
+    intf.resetHistory();
+    intf.cache.resetHistory();
+    query.resetHistory();
+    QueryConstructor.resetHistory();
   });
 
 
   describe('#constructor()', function() {
-    it('should parse fullname / make new FSM', sinon.test(function() {
+    it('should parse fullname / make new FSM', test(function() {
       const resolver = new ServiceResolver(fullname, []);
 
       expect(resolver.instance).to.equal('Instance (2)');
       expect(resolver.serviceType).to.equal('_service');
       expect(resolver.protocol).to.equal('_tcp');
       expect(resolver.domain).to.equal('local');
-      expect(resolver.transition).to.be.a.function;
+      expect(resolver.transition).to.be.a('function');
     }));
   });
 
@@ -128,10 +130,10 @@ describe('ServiceResolver', function() {
       const resolver = new ServiceResolver(fullname, intf);
       const allCalled = _.after(4, done);
 
-      sinon.stub(resolver, 'transition', allCalled);
-      sinon.stub(resolver, '_onAnswer' , allCalled);
-      sinon.stub(resolver, '_onReissue', allCalled);
-      sinon.stub(resolver, '_onExpired', allCalled);
+      sinon.stub(resolver, 'transition').callsFake(allCalled);
+      sinon.stub(resolver, '_onAnswer' ).callsFake(allCalled);
+      sinon.stub(resolver, '_onReissue').callsFake(allCalled);
+      sinon.stub(resolver, '_onExpired').callsFake(allCalled);
 
       resolver._removeListeners();
       resolver._addListeners();
@@ -310,7 +312,7 @@ describe('ServiceResolver', function() {
       resolver.target = null;
       resolver._queryForMissing();
 
-      expect(query.add).to.have.been.calledonce;
+      expect(query.add).to.have.been.calledOnce;
       expect(query.add.firstCall.args[0]).to.have.lengthOf(2);
     });
 
@@ -319,7 +321,7 @@ describe('ServiceResolver', function() {
       resolver.txtRaw = {};
       resolver._queryForMissing();
 
-      expect(query.add).to.have.been.calledonce;
+      expect(query.add).to.have.been.calledOnce;
       expect(query.add.firstCall.args[0]).to.have.lengthOf(2);
     });
 
@@ -327,7 +329,7 @@ describe('ServiceResolver', function() {
       resolver.target = 'Target.local.';
       resolver._queryForMissing();
 
-      expect(query.add).to.have.been.calledonce;
+      expect(query.add).to.have.been.calledOnce;
       expect(query.add.firstCall.args[0]).to.have.lengthOf(3);
     });
 
@@ -381,6 +383,7 @@ describe('ServiceResolver', function() {
         {name: target, qtype: RType.A},
         {name: target, qtype: RType.AAAA},
       ]);
+      resolver.stop();
     });
 
 
@@ -402,12 +405,13 @@ describe('ServiceResolver', function() {
       const resolver = new ServiceResolver(fullname, intf);
       resolver.start([TXT, A, AAAA]);
 
-      expect(resolver.target).to.be.nil;
+      expect(resolver.target).to.be.null;
       expect(resolver.addresses).to.be.empty;
 
       expect(query.add).to.have.been.calledWithMatch([
         {name: fullname, qtype: RType.SRV}
       ]);
+      resolver.stop();
     });
 
 
@@ -442,6 +446,7 @@ describe('ServiceResolver', function() {
         {name: 'Updated Target.local.', qtype: RType.A},
         {name: 'Updated Target.local.', qtype: RType.AAAA},
       ]);
+      resolver.stop();
     });
 
 
@@ -461,6 +466,7 @@ describe('ServiceResolver', function() {
       intf.emit('answer', packet);
 
       expect(resolver.state).to.equal('unresolved');
+      resolver.stop();
     });
 
 
@@ -486,7 +492,7 @@ describe('ServiceResolver', function() {
     });
 
 
-    it('should query for updates as records get stale', sinon.test(function() {
+    it('should query for updates as records get stale', test(function() {
       const resolver = new ServiceResolver(fullname, intf);
       resolver.start([SRV, TXT, A, AAAA]); // is now resolved
 
@@ -506,7 +512,7 @@ describe('ServiceResolver', function() {
     }));
 
 
-    it('should query for reissue updates when unresolved too', sinon.test(function() {
+    it('should query for reissue updates when unresolved too', test(function() {
       const resolver = new ServiceResolver(fullname, intf);
       resolver.start([SRV, TXT, A, AAAA]); // is now resolved
 
@@ -559,7 +565,7 @@ describe('ServiceResolver', function() {
     });
 
 
-    it('should fail and stop if it can\'t resolve within 10s', sinon.test(function() {
+    it('should fail and stop if it can\'t resolve within 10s', test(function() {
       const resolver = new ServiceResolver(fullname, intf);
 
       resolver.start();

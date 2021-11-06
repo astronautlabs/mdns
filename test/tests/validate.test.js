@@ -4,6 +4,8 @@ const chai      = require('chai');
 const expect    = chai.expect;
 const sinon     = require('sinon');
 const sinonChai = require('sinon-chai');
+const sinonTest = require('sinon-test');
+const test = sinonTest(sinon);
 chai.use(sinonChai);
 
 
@@ -41,9 +43,9 @@ describe('validate', function() {
       expect(() => validate.serviceName('name')).to.throw();
     });
 
-    it.skip('should throw if input is >16 bytes', function() {
-      expect(() => validate.serviceName('_0123456789abcdef')).to.throw();
-    });
+    // it.skip('should throw if input is >16 bytes', function() {
+    //   expect(() => validate.serviceName('_0123456789abcdef')).to.throw();
+    // });
 
     it('should throw if input start or ends with ![A-Za-z0-9]', function() {
       expect(() => validate.serviceName('__Abc')).to.throw();
@@ -136,18 +138,18 @@ describe('validate', function() {
     });
 
     it('should throw if a key/value pair is > 255 bytes', function() {
-      expect(() => validate.txt({key: new Buffer(251)})).to.throw();
+      expect(() => validate.txt({key: Buffer.alloc(251)})).to.throw();
     });
 
     it('should throw if txt is > 1300 bytes', function() {
       const input = {
-        key1: new Buffer(200),
-        key2: new Buffer(200),
-        key3: new Buffer(200),
-        key4: new Buffer(200),
-        key5: new Buffer(200),
-        key6: new Buffer(200),
-        key7: new Buffer(200),
+        key1: Buffer.alloc(200),
+        key2: Buffer.alloc(200),
+        key3: Buffer.alloc(200),
+        key4: Buffer.alloc(200),
+        key5: Buffer.alloc(200),
+        key6: Buffer.alloc(200),
+        key7: Buffer.alloc(200),
       };
 
       expect(() => validate.txt(input)).to.throw();
@@ -155,7 +157,7 @@ describe('validate', function() {
 
     it('should *not* throw on valid input:', function() {
       const input = {
-        key: new Buffer(250),
+        key: Buffer.alloc(250),
         str: 'value 1',
         bool: true,
         num: 123,
