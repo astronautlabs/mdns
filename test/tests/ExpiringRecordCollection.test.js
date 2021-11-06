@@ -27,12 +27,12 @@ describe('ExpiringRecordCollection', function() {
 
     it('should return true if collection already has record', test(function() {
       expect(collection.has(TXT)).to.be.true;
-      this.clock.tick(5_000);
+      this.clock.tick(5000);
     }));
 
     it('should return false if it does not have record', test(function() {
       expect(collection.has(PTR)).to.be.false;
-      this.clock.tick(5_000);
+      this.clock.tick(5000);
     }));
   }));
 
@@ -78,7 +78,7 @@ describe('ExpiringRecordCollection', function() {
 
       expect(collection.has(TXT)).to.be.true;
       expect(collection.has(PTR)).to.be.true;
-      this.clock.tick(5_000);
+      this.clock.tick(5000);
     }));
   });
 
@@ -251,7 +251,7 @@ describe('ExpiringRecordCollection', function() {
     it('should return array of its records', test(function() {
       let expiringRecordCollection = new ExpiringRecordCollection([TXT]);
       expect(expiringRecordCollection.toArray()).to.eql([TXT]);
-      this.clock.tick(10_000);
+      this.clock.tick(10000);
     }));
   });
 
@@ -281,13 +281,13 @@ describe('ExpiringRecordCollection', function() {
     it('should return an array of records with the same name', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
       expect(collection._getRelatedRecords(PTR.namehash)).to.eql([PTR]);
-      this.clock.tick(5_000);
+      this.clock.tick(5000);
     }));
 
     it('should return an empty array if no related records exist', test(function() {
       const collection = new ExpiringRecordCollection([PTR]);
       expect(collection._getRelatedRecords('???')).to.eql([]);
-      this.clock.tick(5_000);
+      this.clock.tick(5000);
     }));
   });
 
@@ -308,7 +308,7 @@ describe('ExpiringRecordCollection', function() {
       const results = collection._filterTTL([SRV_1], 0.50);
 
       expect(results).to.not.equal([SRV_1]);
-      this.clock.tick(5_000);
+      this.clock.tick(5000);
     }));
 
     it('should subtract elapsed TTL for records', test(function() {

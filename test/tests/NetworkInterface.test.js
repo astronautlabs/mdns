@@ -298,7 +298,7 @@ describe('NetworkInterface', function() {
         .calledTwice
         .calledWith(unique)
         .calledWith(shared);
-      this.clock.tick(1_000);
+      this.clock.tick(1000);
     }));
   });
 

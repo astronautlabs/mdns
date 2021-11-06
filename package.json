@@ -1,5 +1,5 @@
 {
-  "name": "@gravity/dnssd",
+  "name": "@gravitysoftware/dnssd",
   "version": "0.5.3",
   "description": "Bonjour/Avahi-like service discovery in pure JavaScript",
   "keywords": [
@@ -17,7 +17,7 @@
     }
   ],
   "license": "MIT",
-  "repository": "https://github.com/DeMille/dnssd.js",
+  "repository": "https://gitlab.com/gravitysoftware/dnssd.js.git",
   "main": "./lib",
   "devDependencies": {
     "babel-cli": "^6.26.0",
