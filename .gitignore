@@ -3,6 +3,7 @@ desktop.ini
 *npm-debug*
 node_modules/
 coverage/
+dist/
 
 .idea
 

@@ -1,72 +1,51 @@
-# dnssd.js
-#### Bonjour/Avahi-like service discovery in pure JavaScript
+# @/mdns
 
-[![Build Status](https://travis-ci.org/DeMille/dnssd.js.svg?branch=master)](https://travis-ci.org/DeMille/dnssd.js) [![Coverage Status](https://coveralls.io/repos/github/DeMille/dnssd.js/badge.svg?branch=master)](https://coveralls.io/github/DeMille/dnssd.js?branch=master)
+[![npm](https://img.shields.io/npm/v/@astronautlabs/mdns)](https://npmjs.com/package/@astronautlabs/mdns)
+[![CircleCI](https://circleci.com/gh/astronautlabs/mdns.svg?style=svg)](https://circleci.com/gh/astronautlabs/mdns)
 
-`dnssd` lets you find (and advertise) services on your network like chromecasts, printers, and airplay speakers.
+> **[📜 IETF RFC 6762](https://datatracker.ietf.org/doc/html/rfc6762)**  
+> Multicast DNS
 
-**Features**
-- [x] Compliant with standards ([RFC 6762][6762] & [RFC 6763][6763]) ✔
-- [x] Won't interfere with existing Bonjour/Avahi installs
-- [x] Handles sleep/hibernate/wakes 💤 without [flooding your network][flood]
-- [x] Dependency-less
+> **[📜 IETF RFC 6763](https://datatracker.ietf.org/doc/html/rfc6763)**  
+> DNS-Based Service Discovery
+
+> 📺 Part of the **Astronaut Labs Broadcast Suite**
+
+> ⚠ **Production Quality**  
+> This library is ready for use today (`v1.x.x`) but will be receiving substantial API upgrades and retooling to use 
+> more of the `@astronautlabs/*` frameworks in `v2.x`, so expect fairly large compatibility changes when those 
+> versions are released.
+
+Fully featured mDNS and DNS-SD implementation in Typescript. No native dependencies, works alongside OS-level 
+implementations as long as multiple UDP socket listeners are supported on your platform (supported in modern macOS, 
+Windows, Linux). Extensive tests with continuous integration. Intended for use by Astronaut Labs' NMOS IS-04 
+implementation, but usable for any general purpose mDNS/DNS-SD use cases.
 
 ```
-npm install dnssd
+npm install @astronautlabs/mdns
 ```
-
-[6762]: https://tools.ietf.org/html/rfc6762
-[6763]: https://tools.ietf.org/html/rfc6763
-[flood]: https://www.engadget.com/2018/01/16/google-chromecast-messing-wifi-connections/
-
-<br/>
-
 
 ## Usage
-```js
-const dnssd = require('dnssd');
 
-// advertise a http server on port 4321
-const ad = new dnssd.Advertisement(dnssd.tcp('http'), 4321);
-ad.start();
+Advertise an HTTP server on port 4321:
 
-// find all chromecasts
-const browser = dnssd.Browser(dnssd.tcp('googlecast'))
+```ts
+import { Advertisement } from '@astronautlabs/mdns';
+
+const ad = new Advertisement('_http._tcp', 4321)
+  .start();
+```
+
+Find all Google Cast compatible devices:
+
+```ts
+import { Browser } from '@astronautlabs/mdns';
+
+new Browser('_googlecast._tcp')
   .on('serviceUp', service => console.log("Device up: ", service))
   .on('serviceDown', service => console.log("Device down: ", service))
   .start();
 ```
-
-<br/>
-
-
-## Documentation
-`dnssd` aims to have a API compatible with the [mdns package](https://github.com/agnat/node_mdns) + some extras.
-
-- Class: [Advertisement](#user-content-new-advertisement)
-  + [new dnssd.Advertisement(serviceType, port [, options])](#user-content-new-advertisement)
-  + [.start()](#user-content-advertisement-start)
-  + [.stop([forceImmediately [, callback]])](#user-content-advertisement-stop)
-  + [.on(event, listener)](#user-content-advertisement-on)
-  + [.updateTXT(txt)](#user-content-advertisement-update-txt)
-- Class: [Browser](#user-content-new-browser)
-  + [new dnssd.Browser(serviceType [, options])](#user-content-new-browser)
-  + [.start()](#user-content-browser-start)
-  + [.stop()](#user-content-browser-stop)
-  + [.on(event, listener)](#user-content-browser-on)
-  + [.list()](#user-content-browser-list)
-- [new dnssd.ServiceType(...args)](#user-content-new-servicetype)
-- [dnssd.tcp(...args)](#user-content-tcp)
-- [dnssd.udp(...args)](#user-content-udp)
-- [dnssd.all()](#user-content-all)
-- [resolve(name, type [, options])](#user-content-resolve)
-  + [resolveA(name [, options])](#user-content-resolve-a)
-  + [resolveAAAA(name [, options])](#user-content-resolve-aaaa)
-  + [resolveSRV(name [, options])](#user-content-resolve-srv)
-  + [resolveTXT(name [, options])](#user-content-resolve-txt)
-  + [resolveService(name [, options])](#user-content-resolve-service)
-
-<br/>
 
 ### <a name="new-advertisement"></a> new dnssd.Advertisement(serviceType, port [, options])
 
@@ -274,25 +253,6 @@ TXT records
 <br/>
 
 
-## License
+# Credits
 
-The MIT License (MIT)
-
-Copyright (c) Sterling DeMille
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+This package is based on [Gravity Software's `dnssd.js` package](https://gitlab.com/gravitysoftware/dnssd.js), which itself is based on [David Siegel's `mdns` package](https://github.com/agnat/node_mdns).

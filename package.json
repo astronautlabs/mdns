@@ -20,31 +20,33 @@
   "repository": "https://gitlab.com/gravitysoftware/dnssd.js.git",
   "main": "./lib",
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-env": "^1.7.0",
-    "babel-register": "^6.26.0",
-    "babel-runtime": "^6.26.0",
+    "@types/chai": "^4.3.11",
+    "@types/chalk": "^2.2.0",
+    "@types/lodash": "^4.14.202",
+    "@types/mocha": "^10.0.6",
+    "@types/rewire": "^2.5.30",
+    "@types/sinon": "^17.0.2",
+    "@types/sinon-chai": "^3.2.12",
     "chai": "^4.3.4",
     "coveralls": "^3.1.1",
     "istanbul": "^0.4.5",
+    "jest": "^29.7.0",
     "lodash": "^4.17.21",
     "mocha": "^9.1.3",
     "mocha-lcov-reporter": "^1.3.0",
     "rewire": "^5.0.0",
     "sinon": "^11.0.0",
+    "sinon-chai": "^3.7.0",
     "sinon-test": "^3.1.1",
-    "sinon-chai": "^3.7.0"
+    "strip-ansi": "^6.0.1",
+    "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   },
   "scripts": {
-    "build": "babel ./src -d ./lib && babel ./bin/bin.js -o ./bin/bin.build.js",
-    "test": "mocha ./test/test_src.js",
-    "test:build": "npm run build && mocha --require babel-register ./test/test_lib.js",
-    "sanity": "mocha --require babel-register ./test/sanity.js",
-    "cover": "istanbul cover ./node_modules/mocha/bin/_mocha ./test/test_src.js",
+    "build": "tsc -b",
+    "test": "npm run build && mocha ./dist/test/test_src.js",
+    "cover": "npm run build && istanbul cover ./node_modules/mocha/bin/_mocha ./dist/test/test_src.js",
     "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls"
-  },
-  "bin": {
-    "dnssd-js": "./bin/bin.js"
   }
 }
