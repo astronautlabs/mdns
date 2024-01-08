@@ -166,7 +166,6 @@ describe('DisposableInterface', function() {
       sinon.stub(networkInterface, '_onMessage').callsFake(() => done());
 
       (networkInterface as any)._bindSocketWithAddress(IPv4).then(() => {
-        console.log(`EMIT MESSAG`);
         socket.emit('message')
       });
 
