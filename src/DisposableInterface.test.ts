@@ -131,7 +131,7 @@ describe('DisposableInterface', function() {
 
       setTimeout(() => {
         socket.on('error', () => {});
-        socket.emit('error');
+        socket.emit('error', new Error('Fake error for testing'));
       }, 10);
 
       try {
@@ -156,7 +156,7 @@ describe('DisposableInterface', function() {
       const { networkInterface, socket } = harness('Wi-Fi');
       sinon.stub(networkInterface as any, '_onError').callsFake(() => done());
 
-      (networkInterface as any)._bindSocketWithAddress(IPv4).then(() => socket.emit('error'));
+      (networkInterface as any)._bindSocketWithAddress(IPv4).then(() => socket.emit('error', new Error('Fake error for testing')));
 
       socket.emit('listening');
     });

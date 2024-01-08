@@ -76,9 +76,6 @@ export class DisposableInterface extends NetworkInterface {
             const socket = this.createSocket(socketType);
 
             socket.on('error', (err) => {
-                console.error(`DisposableInterface: Socket error:`);
-                console.error(err);
-
                 if (isPending) reject(err);
                 else this._onError(err);
             });
