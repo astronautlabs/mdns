@@ -84,6 +84,7 @@ export class NetworkInterface extends EventEmitter {
         this._buffers = [];
     }
 
+    get id() { return this._id; }
     protected _id: string;
     private _usingMe: number = 0;
     protected _isBound = false;

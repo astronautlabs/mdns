@@ -2,112 +2,166 @@ import { ValidationError } from './ValidationError';
 import * as validate from './validate';
 
 /**
- * Creates a new ServiceType
- * @class
- *
- * Used to turn some input into a reliable service type for advertisements and
- * browsers. Does validation on input, throwing errors if there's a problem.
+ * Used by Advertisement and Browser to represent an mDNS service type, consisting of a service name, a protocol 
+ * (typically TCP/UDP), and an optional set of subtypes.
  *
  * Name and protocol are always required, subtypes are optional.
  *
- * String (single argument):
- *   '_http._tcp'
- *   '_http._tcp,mysubtype,anothersub'
+ * String descriptions: 
+ * - `_http._tcp`
+ * - `_http._tcp,mysubtype,anothersub`
  *
- * Object (single argument):
+ * Object descriptions:
+ * - ```ts
  *   {
  *     name:     '_http',
  *     protocol: '_tcp',
  *     subtypes: ['mysubtype', 'anothersub'],
  *   }
+ *   ```
  *
- * Array (single argument):
+ * Array descriptions:
+ * - ```ts
+ *   ['_http', '_tcp']
+ *   ```
+ * - ```ts
  *   ['_http', '_tcp', ['mysubtype', 'anothersub']]
+ *   ```
+ * - ```ts
  *   ['_http', '_tcp', 'mysubtype', 'anothersub']
+ *   ```
  *
- * Strings (multiple arguments):
- *   '_http', '_tcp'
- *   '_http', '_tcp', 'mysubtype', 'anothersub'
- *
- * Validation step is forgiving about required leading underscores and
- * will add them it missing. So 'http.tcp' would be the same as '_http._tcp'.
- *
- * @param {string|object|array|...string} arguments
+ * Validation is forgiving when the required leading underscores are missing (they will be
+ * automatically added). Thus 'http.tcp' is considered the same as '_http._tcp'.
  */
 export class ServiceType {
-    constructor(...args) {
-        const input = (args.length === 1) ? args[0] : args;
-        const type = typeof input;
-
-        if (type === 'string') this._fromString(input);
+    /**
+     * Construct a new ServiceType.
+     * 
+     * @param input Description of the service type. Can be a string (`_http._tcp`), 
+     *              an array (`["_http", "_tcp"]`), or an object (`{ name: "_http", protocol: "_tcp"}`).
+     *              See class documentation for more information.
+     * @throws ValidationError The provided description is not valid
+     */
+    constructor(input: string | string[] | { name: string, protocol: string, subtypes?: string[] }) {
+        if (typeof input === 'string') this._fromString(input);
         else if (Array.isArray(input)) this._fromArray(<[any, any, ...any]>input);
-        else if (type === 'object') this._fromObj(input);
+        else if (typeof input === 'object') this._fromObj(input);
         else {
-            throw new ValidationError(`Argument must be string, obj, or array. got ${type}`);
+            throw new ValidationError(`Argument must be string, obj, or array. got ${typeof input}`);
         }
 
         this._validate();
     }
 
+    /**
+     * Service name for this service descriptor (ie `_http`).
+     */
     name: string = null;
+
+    /**
+     * Protocol for this service descriptor. Can be `_tcp` or `_udp`.
+     */
     protocol: '_tcp' | '_udp' = null;
+
+    /**
+     * Subtypes for this service descriptor. Subtypes are used to differentiate the 
+     * "role" of a specific service when the service name itself is too generic. For instance, if 
+     * you are advertising an HTTP server, you can certainly advertise MyServer._http._tcp, but if 
+     * that HTTP server is the administration interface of a printer, you may wish to advertise it 
+     * with a subtype of "_printer", so that browsers can look for printer-specific HTTP services.
+     * 
+     * @see [RFC 6763 Section 7.1](https://datatracker.ietf.org/doc/html/rfc6763#section-7.1)
+     */
     subtypes: string[] = [];
+
+    /**
+     * True if this is the special "service type enumerator" service type, which is used 
+     * to enumerate the service types in use across an existing mDNS network.
+     */
     isEnumerator = false;
 
     /**
-     * Creates a new ServiceType with tcp protocol
-     * Ex:
-     *   ServiceType.tcp('_http')
-     *   ServiceType.tcp('_http', 'sub1', 'sub2')
-     *   ServiceType.tcp(['_http', 'sub1', 'sub2'])
-     *
-     * @param  {string|array|...string} arguments
-     * @return {ServiceType}
+     * Get the DNS name for this service type. For example "_http._tcp". If subtypes
+     * are defined, the first subtype is returned ("_printer._sub._http._tcp"). 
+     * 
+     * If you instead would like a single string containing the service name, protocol,
+     * and all subtypes, use `toString()`
+     * 
+     * @see `dnsNames` for all DNS names
+     * @see `toString()` for a compact and complete description of this service type
      */
-    static tcp(...args) {
-        // insert protocol in the right spot (second arg)
-        const input = [].concat(...args);
-        input.splice(1, 0, '_tcp');
-
-        return new ServiceType(input);
+    get dnsName() {
+        return this.dnsNames[0];
     }
 
-
     /**
-     * Creates a new ServiceType with udp protocol
-     * Ex:
-     *   ServiceType.tcp('_sleep-proxy,sub1,sub2')
-     *   ServiceType.tcp('_sleep-proxy', 'sub1', 'sub2')
-     *   ServiceType.tcp(['_sleep-proxy', 'sub1', 'sub2'])
-     *
-     * @param  {string|array|...string} [arguments]
-     * @return {ServiceType}
+     * Get all relevant DNS names for this service type. If there are no subtypes, an
+     * array of one DNS name is returned (ie `_http._tcp`). If subtypes are defined,
+     * one item per subtype is returned (ie `_printer._sub._http._tcp`).
      */
-    static udp(...args) {
-        // insert protocol in the right spot (second arg)
-        const input = [].concat(...args);
-        input.splice(1, 0, '_udp');
+    get dnsNames() {
+        if (this.subtypes.length === 0)
+            return [`${this.name}.${this.protocol}`];
 
-        return new ServiceType(input);
+        return this.subtypes.map(subtype => `${subtype}._sub.${this.name}.${this.protocol}`);
     }
 
+    /**
+     * Create a new TCP protocol service type.
+     * 
+     * @example - ```ts
+     *            ServiceType.tcp('_http')
+     *            ```
+     *          - ```ts
+     *            ServiceType.tcp('_http', 'sub1', 'sub2')
+     *            ```
+     *          - ```ts
+     *            ServiceType.tcp(['_http', 'sub1', 'sub2'])
+     *            ```
+     */
+    static tcp(input: string | string[]) {
+        let components = typeof input === 'string' ? input.split(',') : input;
+        components.splice(1, 0, '_tcp');
+        return new ServiceType(components);
+    }
 
     /**
-     * Creates a new service enumerator
-     * @return {ServiceType}
+     * Create a new UDP protocol service type.
+     * 
+     * @example - ```ts
+     *            ServiceType.tcp('_sleep-proxy')
+     *            ```
+     *          - ```ts
+     *            ServiceType.tcp('_sleep-proxy,sub1,sub2')
+     *            ```
+     *          - ```ts
+     *            ServiceType.tcp(['_sleep-proxy', 'sub1', 'sub2'])
+     *            ```
+     */
+    static udp(input: string | string[]) {
+        let components = typeof input === 'string' ? input.split(',') : input;
+        components.splice(1, 0, '_udp');
+        return new ServiceType(components);
+    }
+
+    /**
+     * Creates a new service type enumerator. This special service type can be 
+     * used to discover the service types in use by services present on the network.
+     * 
+     * @see [RFC 6763 section 9](https://datatracker.ietf.org/doc/html/rfc6763#section-9).
      */
     static all() {
         return new ServiceType('_services._dns-sd._udp');
     }
 
-
     /**
      * Parse a string into service parts
-     * Ex:
-     *   '_http._tcp'
-     *   '_http._tcp,mysubtype,anothersub'
+     * @example Inputs:
+     *          - `_http._tcp`
+     *          - `_http._tcp,mysubtype,anothersub`
      */
-    _fromString(str) {
+    private _fromString(str) {
         // trim off weird whitespace and extra trailing commas
         const parts = str.replace(/^[ ,]+|[ ,]+$/g, '').split(',').map(s => s.trim());
 
@@ -119,11 +173,11 @@ export class ServiceType {
 
     /**
      * Parse an array into service parts
-     * Ex:
-     *   ['_http', '_tcp', ['mysubtype', 'anothersub']]
-     *   ['_http', '_tcp', 'mysubtype', 'anothersub']
+     * @example Inputs:
+     *          - `['_http', '_tcp', ['mysubtype', 'anothersub']]`
+     *          - `['_http', '_tcp', 'mysubtype', 'anothersub']`
      */
-    _fromArray([name, protocol, ...subtypes]) {
+    private _fromArray([name, protocol, ...subtypes]) {
         this._fromObj({
             name,
             protocol,
@@ -134,13 +188,16 @@ export class ServiceType {
 
     /**
      * Parse an object into service parts
-     * Ex: {
-     *   name:     '_http',
-     *   protocol: '_tcp',
-     *   subtypes: ['mysubtype', 'anothersub'],
-     * }
+     * @example Input:
+     *          ```ts
+     *          {
+     *            name:     '_http',
+     *            protocol: '_tcp',
+     *            subtypes: ['mysubtype', 'anothersub'],
+     *          }
+     *          ```
      */
-    _fromObj({ name, protocol, subtypes = [] }) {
+    private _fromObj({ name, protocol, subtypes = [] }) {
         this.name = name;
         this.protocol = protocol;
         this.subtypes = (Array.isArray(subtypes)) ? subtypes : [subtypes];
@@ -148,10 +205,11 @@ export class ServiceType {
 
 
     /**
-     * Validates service name, protocol, and subtypes. Throws if any of them
-     * are invalid.
+     * Validate service name, protocol, and subtype(s). 
+     * 
+     * @throws `ValidationError` If one or more components are invalid
      */
-    _validate() {
+    private _validate() {
         if (typeof this.name !== 'string') {
             throw new ValidationError(`Service name must be a string, got ${typeof this.name}`);
         }
@@ -190,10 +248,9 @@ export class ServiceType {
         this.subtypes.forEach(subtype => validate.label(subtype, 'Subtype'));
     }
 
-
     /**
-     * A string representation of the service
-     * ex: '_http._tcp,sub1,sub2'
+     * A string representation of the service. For example `_http._tcp,sub1,sub2`.
+     * The output format can be fed into the ServiceType constructor if needed.
      */
     toString() {
         return (this.subtypes.length)

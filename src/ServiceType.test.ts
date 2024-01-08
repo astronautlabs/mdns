@@ -5,42 +5,29 @@ import { ServiceType } from './ServiceType';
 import * as validate from './validate';
 
 describe('ServiceType', () => {
-  sinon.spy(ServiceType.prototype, '_fromString');
-  sinon.spy(ServiceType.prototype, '_fromArray');
-  sinon.spy(ServiceType.prototype, '_validate');
-  sinon.spy(ServiceType.prototype, '_fromObj');
+  sinon.spy(ServiceType.prototype as any, '_fromString');
+  sinon.spy(ServiceType.prototype as any, '_fromArray');
+  sinon.spy(ServiceType.prototype as any, '_validate');
+  sinon.spy(ServiceType.prototype as any, '_fromObj');
 
   describe('#constructor()', () => {
     it('should call this._fromString() on string', () => {
-
       const type = new ServiceType('_http._tcp');
-
-      expect(type._fromString).to.have.been.called;
+      expect((type as any)._fromString).to.have.been.called;
     });
 
     it('should call this._fromArray() on array', () => {
-
       const type = new ServiceType(['_http', '_tcp']);
-
-      expect(type._fromArray).to.have.been.called;
+      expect((type as any)._fromArray).to.have.been.called;
     });
 
     it('should call this._fromObj() on object', () => {
       const type = new ServiceType({ name: '_http', protocol: '_tcp' });
-
-      expect(type._fromObj).to.have.been.called;
-    });
-
-    it('should convert multiple args to array form', () => {
-
-      const type = new ServiceType('_http', '_tcp', 'sub1', 'sub2');
-      const expected = ['_http', '_tcp', 'sub1', 'sub2'];
-
-      expect(type._fromArray).to.have.been.calledWithMatch(expected);
+      expect((type as any)._fromObj).to.have.been.called;
     });
 
     it('should throw an error for any other input type', () => {
-      expect(() => new ServiceType(99)).to.throw();
+      expect(() => new ServiceType(99 as any)).to.throw();
     });
   });
 
@@ -50,7 +37,7 @@ describe('ServiceType', () => {
       const input = '_http._tcp';
       const results = {};
 
-      ServiceType.prototype._fromString.call(results, input);
+      (ServiceType.prototype as any)._fromString.call(results, input);
 
       const expected = {
         name:     '_http',
@@ -65,7 +52,7 @@ describe('ServiceType', () => {
       const input = '_http._tcp,sub1,sub2';
       const results = {};
 
-      ServiceType.prototype._fromString.call(results, input);
+      (ServiceType.prototype as any)._fromString.call(results, input);
 
       const expected = {
         name:     '_http',
@@ -80,8 +67,8 @@ describe('ServiceType', () => {
       const input = ' _http._tcp ,sub1,sub2, ';
       const results = {};
 
-      ServiceType.prototype._fromString.call(results, input);
-
+      (ServiceType.prototype as any)._fromString.call(results, input);
+ 
       const expected = {
         name:     '_http',
         protocol: '_tcp',
@@ -95,7 +82,7 @@ describe('ServiceType', () => {
       const input = '_services._dns-sd._udp';
       const results = {};
 
-      ServiceType.prototype._fromString.call(results, input);
+      (ServiceType.prototype as any)._fromString.call(results, input);
 
       const expected = {
         name:     '_services._dns-sd',
@@ -113,7 +100,7 @@ describe('ServiceType', () => {
       const input = ['_http', '_tcp', ['sub1', 'sub2']];
       const results = {_fromObj: sinon.stub()};
 
-      ServiceType.prototype._fromArray.call(results, input);
+      (ServiceType.prototype as any)._fromArray.call(results, input);
 
       const expected = {
         name:     '_http',
@@ -128,7 +115,7 @@ describe('ServiceType', () => {
       const input = ['_http', '_tcp', 'sub1', 'sub2'];
       const results = {_fromObj: sinon.stub()};
 
-      ServiceType.prototype._fromArray.call(results, input);
+      (ServiceType.prototype as any)._fromArray.call(results, input);
 
       const expected = {
         name:     '_http',
@@ -151,7 +138,7 @@ describe('ServiceType', () => {
         subtypes: 'sub1',
       };
 
-      ServiceType.prototype._fromObj.call(results, input);
+      (ServiceType.prototype as any)._fromObj.call(results, input);
 
       const expected = {
         name:     '_http',
@@ -172,7 +159,7 @@ describe('ServiceType', () => {
         ignore:   'ok',
       };
 
-      ServiceType.prototype._fromObj.call(results, input);
+      (ServiceType.prototype as any)._fromObj.call(results, input);
 
       const expected = {
         name:     '_http',
@@ -198,16 +185,16 @@ describe('ServiceType', () => {
       const input_1 = {name: 4};
       const input_2 = {name: ''};
 
-      expect(ServiceType.prototype._validate.bind(input_1)).to.throw(Error);
-      expect(ServiceType.prototype._validate.bind(input_2)).to.throw(Error);
+      expect((ServiceType.prototype as any)._validate.bind(input_1)).to.throw(Error);
+      expect((ServiceType.prototype as any)._validate.bind(input_2)).to.throw(Error);
     });
 
     it('should throw error if protocol is missing / is not a string', () => {
       const input_1 = {name: '_http', protocol: 4};
       const input_2 = {name: '_http', protocol: ''};
 
-      expect(ServiceType.prototype._validate.bind(input_1)).to.throw(Error);
-      expect(ServiceType.prototype._validate.bind(input_2)).to.throw(Error);
+      expect((ServiceType.prototype as any)._validate.bind(input_1)).to.throw(Error);
+      expect((ServiceType.prototype as any)._validate.bind(input_2)).to.throw(Error);
     });
 
     it('should be forgiving about underscores in name/protocol', () => {
@@ -217,7 +204,7 @@ describe('ServiceType', () => {
         subtypes: [],
       };
 
-      ServiceType.prototype._validate.call(context);
+      (ServiceType.prototype as any)._validate.call(context);
 
       expect(context.name).to.equal('_http');
       expect(context.protocol).to.equal('_tcp');
@@ -230,7 +217,7 @@ describe('ServiceType', () => {
         subtypes: [],
       };
 
-      ServiceType.prototype._validate.call(context);
+      (ServiceType.prototype as any)._validate.call(context);
 
       expect(validateSpy.serviceName).to.have.been.called;
       expect(validateSpy.protocol).to.have.been.called;
@@ -244,7 +231,7 @@ describe('ServiceType', () => {
         subtypes: ['sub1', 'sub2'],
       };
 
-      ServiceType.prototype._validate.call(context);
+      (ServiceType.prototype as any)._validate.call(context);
 
       expect(context.subtypes).to.be.empty;
       expect(context.isEnumerator).to.be.true;
@@ -286,26 +273,26 @@ describe('ServiceType', () => {
       expect(ServiceType.tcp.bind(null, '')).to.throw(Error);
     });
 
-    it('should return a correct tcp ServiceType', () => {
+    it('should return a correct TCP ServiceType', () => {
       // single string
       expect(ServiceType.tcp('_http'))
         .to.be.an.instanceof(ServiceType)
         .to.include({name: '_http', protocol: '_tcp'});
 
       // name and subtype
-      expect(ServiceType.tcp('_http', 'sub1'))
+      expect(ServiceType.tcp(['_http', 'sub1']))
         .to.be.an.instanceof(ServiceType)
         .to.include({name: '_http', protocol: '_tcp'})
         .to.property('subtypes').eql(['sub1']);
 
-      // name and subtypes in array
-      expect(ServiceType.tcp('_http', ['sub1', 'sub2']))
+      // name and subtypes
+      expect(ServiceType.tcp(['_http', 'sub1', 'sub2']))
         .to.be.an.instanceof(ServiceType)
         .to.include({name: '_http', protocol: '_tcp'})
         .to.property('subtypes').eql(['sub1', 'sub2']);
 
-      // name and subtypes
-      expect(ServiceType.tcp('_http', 'sub1', 'sub2'))
+      // name and subtypes as string
+      expect(ServiceType.tcp('_http,sub1,sub2'))
         .to.be.an.instanceof(ServiceType)
         .to.include({name: '_http', protocol: '_tcp'})
         .to.property('subtypes').eql(['sub1', 'sub2']);
@@ -319,26 +306,26 @@ describe('ServiceType', () => {
       expect(ServiceType.udp.bind(null, '')).to.throw(Error);
     });
 
-    it('should return a correct udp ServiceType', () => {
+    it('should return a correct UDP ServiceType', () => {
       // single string
       expect(ServiceType.udp('_sleep-proxy'))
         .to.be.an.instanceof(ServiceType)
         .to.include({name: '_sleep-proxy', protocol: '_udp'});
 
       // name and subtype
-      expect(ServiceType.udp('_sleep-proxy', 'sub1'))
+      expect(ServiceType.udp(['_sleep-proxy', 'sub1']))
         .to.be.an.instanceof(ServiceType)
         .to.include({name: '_sleep-proxy', protocol: '_udp'})
         .to.property('subtypes').eql(['sub1']);
 
-      // name and subtypes in array
-      expect(ServiceType.udp('_sleep-proxy', ['sub1', 'sub2']))
+      // name and subtypes
+      expect(ServiceType.udp(['_sleep-proxy', 'sub1', 'sub2']))
         .to.be.an.instanceof(ServiceType)
         .to.include({name: '_sleep-proxy', protocol: '_udp'})
         .to.property('subtypes').eql(['sub1', 'sub2']);
 
-      // name and subtypes
-      expect(ServiceType.udp('_sleep-proxy', 'sub1', 'sub2'))
+      // name and subtypes as string
+      expect(ServiceType.udp('_sleep-proxy,sub1,sub2'))
         .to.be.an.instanceof(ServiceType)
         .to.include({name: '_sleep-proxy', protocol: '_udp'})
         .to.property('subtypes').eql(['sub1', 'sub2']);

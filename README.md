@@ -47,211 +47,38 @@ new Browser('_googlecast._tcp')
   .start();
 ```
 
-### <a name="new-advertisement"></a> new dnssd.Advertisement(serviceType, port [, options])
+You can also use this library to query multicast DNS as you would unicast DNS using the `MulticastDNS` class.
 
-```js
-// advertising a http server on port 4321:
-const ad = new dnssd.Advertisement(dnssd.tcp('http'), 4321);
-ad.start();
+```ts
+import { MulticastDNS } from '@astronautlabs/mdns';
+let ipAddress: string = await MulticastDNS.A('myService._http._tcp');
 ```
 
-`options.name`      - instance name  
-`options.host`      - hostname to use  
-`options.txt`       - TXT record  
-`options.subtypes`  - subtypes to register  
-`options.interface` - interface name or address to use ('eth0' or '1.2.3.4')
+You can also use `MulticastDNS.query()` to retrieve the records themselves.
 
-#### <a name="advertisement-start"></a> .start()
-Starts the advertisement.  
-If there is a conflict with the instance name it will automatically get renamed. (`Name` -> `Name (2)`)
+```ts
+import { MulticastDNS, SRVRecord } from '@astronautlabs/mdns';
 
-#### <a name="advertisement-stop"></a> .stop([forceImmediately [, callback]])
-Stops the advertisement.  
-Can do either a clean stop or a forced stop. A clean stop will send goodbye records out so others will know the service is going down. This takes ~1s. Forced goodbyes shut everything down immediately.
-
-#### <a name="advertisement-on"></a> .on(event, listener)
-`error`  
-`stopped` when the advertisement is stopped  
-`instanceRenamed` when the service instance has to be renamed  
-`hostRenamed` when the hostname has to be renamed
-
-#### <a name="advertisement-update-txt"></a> .updateTXT(txt)
-Updates the advertisements TXT record
-
-### <a name="new-browser"> new dnssd.Browser(serviceType [, options])
-
-```js
-// find all chromecasts
-const browser = dnssd.Browser(dnssd.tcp('googlecast'))
-  .on('serviceUp', service => console.log("Device up: ", service))
-  .on('serviceDown', service => console.log("Device down: ", service))
-  .start();
+let { answer, related } = await MulticastDNS.query<SRVRecord>('myService._http._tcp', 'SRV');
+// answer: SRVRecord, related: ResourceRecord[]
 ```
 
-A resolved `service` looks like:
-```js
-service = {
-  fullname: 'InstanceName._googlecast._tcp.local.',
-  name: 'InstanceName',
-  type: { name: 'googlecast', protocol: 'tcp' },
-  domain: 'local',
-  host: 'Hostname.local.',
-  port: 8009,
-  addresses: ['192.168.1.15'],
-  txt: { id: 'strings' },
-  txtRaw: { id: <Buffer XX XX XX... >},
-};
+## Validation
 
-```
+Service type names and TXT records have some specific restrictions.
 
-Browser search is a multi-step process. First it finds an instance name, then it resolves all the necessary properties of the service, like the address and the port. It keeps that data up to date by sending more queries out as needed. If you want less steps, there's some options:
+Service names:
+* must start with an underscore _
+* less than 16 chars including the leading _
+* must start with a letter or digit
+* only letters / digits / hyphens (but not consecutively: --)
 
-`options.maintain`: Set to false if don't want to maintain a service's info. This will give you a 'serviceUp' event but no 'serviceDown' or 'serviceUpdated'
-
-`options.resolve`: Set to false if you only want the instance name and nothing else.
-
-`options.interface`: Sets the interface to use ('eth0' or '1.2.3.4')
-
-#### <a name="browser-start"></a> .start()
-Starts the browser.
-
-#### <a name="browser-stop"></a> .stop()
-Stops the browser.
-
-#### <a name="browser-on"></a> .on(event, listener)
-`error`  
-`serviceUp` when a new service is found  
-`serviceChanged` when a service's data has changed  
-`serviceDown` when a service goes down
-
-#### <a name="browser-list"></a> .list()
-Lists all current services that have been found.
-
-
-### <a name="new-servicetype"></a> new dnssd.ServiceType(...args)
-
-Used to turn some input into a reliable service type for advertisements and browsers. Name and protocol are always required, subtypes are optional. Multiple forms available:
-
-**String** _(single argument)_
-```js
-'_http._tcp'
-'_http._tcp,mysubtype,anothersub'
-```
-
-**Object** _(single argument)_
-```js
-{
-  name:     '_http',
-  protocol: '_tcp',
-  subtypes: ['mysubtype', 'anothersub'],
-}
-```
-
-**Array** _(single argument)_
-```js
-['_http', '_tcp', ['mysubtype', 'anothersub']]
-['_http', '_tcp', 'mysubtype', 'anothersub']
-```
-
-**Strings** _(multiple arguments)_
-```js
-'_http', '_tcp'
-'_http', '_tcp', 'mysubtype', 'anothersub'
-```
-
-
-
-### <a name="tcp"></a> dnssd.tcp(...args)
-Creates a new ServiceType with tcp protocol
-
-```js
-ServiceType.tcp('_http')
-ServiceType.tcp('_http', 'sub1', 'sub2')
-ServiceType.tcp(['_http', 'sub1', 'sub2'])
-```
-
-### <a name="udp"></a> dnssd.udp(...args)
-Creates a new ServiceType with udp protocol
-
-```js
-new ServiceType('_services._dns-sd._udp');
-```
-
-### <a name="all"></a> dnssd.all()
-```js
-// browse all the things
-const browser = dnssd.Browser(dnssd.all())
-```
-
-### <a name="resolve"></a> dnssd.resolve(name, type [, options])
-Async functions for resolving specific records / record types. Returns a promise with result.
-
-```js
-dnssd.resolve(name, rrtype).then(function(result) {})
-result = {
-    answer: {}
-    related: [{}, {}]
-}
-```
-
-#### <a name="resolve-a"></a> dnssd.resolveA(name [, options])
-```js
-dnssd.resolveA('something.local.').then((address) => {
-  address === '192.168.1.10'
-});
-```
-
-#### <a name="resolve-aaaa"></a> dnssd.resolveAAAA(name [, options])
-```js
-dnssd.resolveAAAA('computer.local.').then((address) => {
-  address === '2001:0db8:85a3:0000:0000:8a2e:0370:7334'
-});
-```
-
-#### <a name="resolve-srv"></a> dnssd.resolveSRV(name [, options])
-```js
-dnssd.resolveSRV(name).then((srv) => {
-  srv === {
-      target: 'machine.local.',
-      port: 8000,
-  }
-});
-```
-
-#### <a name="resolve-txt"></a> dnssd.resolveTXT(name [, options])
-```js
-dnssd.resolveTXT(name).then((txt) => {
-  txt === { some: 'thing' }
-});
-```
-
-#### <a name="resolve-service"></a> dnssd.resolveService(name [, options])
-```js
-dnssd.resolveService(name).then((service) => {
-  service === like the browser results
-});
-```
-
-<br />
-
-## Validations
-Service type names and TXT records have some restrictions:
-
-serviceNames:  
-\* must start with an underscore _  
-\* less than 16 chars including the leading _  
-\* must start with a letter or digit  
-\* only letters / digits / hyphens (but not consecutively: --)  
-
-TXT records  
-\* Keys <= 9 chars  
-\* Keys must be ascii and can't use '='  
-\* Values must be a string, buffer, number, or boolean  
-\* Each key/value pair must be < 255 bytes  
-\* Total TXT object is < 1300 bytes  
-
-<br/>
-
+TXT records:
+* Keys <= 9 chars
+* Keys must be ascii and can't use '='
+* Values must be a string, buffer, number, or boolean
+* Each key/value pair must be < 255 bytes
+* Total TXT object is < 1300 bytes
 
 # Credits
 

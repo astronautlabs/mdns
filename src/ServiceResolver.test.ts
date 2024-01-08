@@ -8,7 +8,7 @@ import { AAAARecord, ARecord, PTRRecord, SRVRecord, TXTRecord } from './Resource
 import { RType } from './constants';
 import { ServiceResolver } from './ServiceResolver';
 
-import * as Fake from './test/Fake';
+import * as Fake from './test-mocks';
 import { Query } from './Query';
 
 jest.useFakeTimers();

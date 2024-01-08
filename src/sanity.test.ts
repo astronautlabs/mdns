@@ -4,7 +4,7 @@ import { jest } from '@jest/globals';
 import { Browser } from './Browser';
 import { Advertisement } from './Advertisement';
 import { ServiceType } from './ServiceType';
-import * as resolve from './resolve';
+import { MulticastDNS } from './MulticastDNS';
 import { Platform } from './Platform';
 
 import _ from 'lodash';
@@ -19,11 +19,9 @@ describe('Sanity tests:', function() {
   // Once we receive serviceDown, we'll end the browser. This should take about 3.5s on a heavily populated 
   // (30 mDNS device) network.
   it('advertisement and browser should talk to each other', function(done) {
-    const options = {name: 'Test #1'};
+    const ad = new Advertisement('_test._tcp', 4444, {name: 'Test #1'}).start();
 
-    const ad = new Advertisement('_test._tcp', 4444, options).start();
-
-    const browser = new Browser(ServiceType.tcp('test'), options)
+    const browser = new Browser(ServiceType.tcp('test'))
       .on('serviceUp', (service) => {
         if (service.name === ad.instanceName && service.port === ad.port) {
           ad.stop();
@@ -55,7 +53,6 @@ describe('Sanity tests:', function() {
 
     ad_2 = new Advertisement('_test._tcp', 5555, options) // <-- conflicting port!
       .on('instanceRenamed', (name) => {
-        console.log(`ad_2 renamed`);
         expect(name).to.equal('Test #2 (2)');
         callback(); // must be called for test to complete
       })
@@ -64,7 +61,6 @@ describe('Sanity tests:', function() {
     ad_1 = new Advertisement(ServiceType.tcp('test'), 4444, options)
       .on('instanceRenamed', () => { done(new Error('First service was renamed! There should not have been a conflict yet!')); })
       .on('active', () => {
-        console.log(`ad_1 active`);
         ad_2.start()
       })
       .start();
@@ -96,15 +92,14 @@ describe('Sanity tests:', function() {
   // Create an advertisement and then see that the resolve.resolveService() convenience API
   // can find it. This can take about 60 seconds on a heavily populated network (30 devices).
   it('should be able to resolve from an advertisement', function(done) {
-    const options = {name: 'Test #3'};
-    let ad = new Advertisement(ServiceType.tcp('test'), 4444, options)
+    let ad = new Advertisement(ServiceType.tcp('test'), 4444, {name: 'Test #3'})
       .on('active', async () => {
         const fullname = 'Test #3._test._tcp.local.';
   
         let service: Service;
         
         try {
-          service = await resolve.resolveService(fullname, options)
+          service = await Browser.resolveService(fullname)
         } catch(err) {
           ad.stop(false, () => done(err));
           return;
@@ -131,12 +126,11 @@ describe('Sanity tests:', function() {
   // and consider the test a success.
   // This is a quick one, should only take about 3 seconds on a heavily populated network (30 devices).
   it('browsers should listen to advertisement changes', function(done) {
-    const options = {name: 'Test #4'};
     let updated = false;
 
-    const ad = new Advertisement('_test._tcp', 4444, options).start();
+    const ad = new Advertisement('_test._tcp', 4444, {name: 'Test #4'}).start();
 
-    const browser = new Browser('_test._tcp', options)
+    const browser = new Browser('_test._tcp')
       .on('serviceChanged', (service) => {
         if (service.name === ad.instanceName && service.port === ad.port) {
           if (_(service.txt).isEqual({key: 'value'})) {

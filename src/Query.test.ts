@@ -7,7 +7,7 @@ import { AAAARecord, ARecord, PTRRecord, ResourceRecord, SRVRecord, TXTRecord } 
 import { ExpiringRecordCollection } from './ExpiringRecordCollection';
 import { Query } from './Query';
 
-import * as Fake from './test/Fake';
+import * as Fake from './test-mocks';
 import { jest } from '@jest/globals';
 
 jest.useFakeTimers();

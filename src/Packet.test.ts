@@ -1,18 +1,10 @@
+import { expect } from 'chai';
+import sinon from 'sinon';
+
 import * as fs from 'fs';
 import * as path from 'path';
 
-import * as chai from 'chai';
-import { expect } from 'chai';
-import rewire from 'rewire';
-import sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import sinonTest from 'sinon-test';
 import _ from 'lodash';
-
-const test = sinonTest(sinon);
-chai.use(sinonChai);
-
-const dir = process['test-dir'] || './src';
 
 import { BufferWrapper } from './BufferWrapper';
 import { ResourceRecord, TXTRecord } from './ResourceRecord';
@@ -21,35 +13,38 @@ import { QueryRecord } from './QueryRecord';
 import { Packet } from './Packet';
 
 
-describe('Packet', function() {
+describe('Packet', () => {
+  beforeEach(() => sinon.restore());
+
   const packetDir = path.resolve(__dirname, './../test-data/packets/');
 
-  describe('#constructor', function() {
-    it('should start with an empty packet', function() {
+  describe('#constructor', () => {
+    it('should start with an empty packet', () => {
       expect((new Packet()).isEmpty()).to.be.true;
     });
 
-    it('should create a packet from a given buffer', test(function() {
-      this.stub(Packet.prototype, 'parseBuffer');
+    it('should create a packet from a given buffer', () => {
+      sinon.stub(Packet.prototype, 'parseBuffer');
+      
       const fakebuffer = Buffer.alloc(0);
       const packet = new Packet(fakebuffer);
 
       expect(packet.parseBuffer).to.have.been.calledWith(fakebuffer);
-    }));
+    });
 
-    it('should make .isInvalid() false if parsing fails', test(function() {
-      this.stub(Packet.prototype, 'parseBuffer').throws();
-      this.stub(Packet.prototype, 'isValid').returns(true);
+    it('should make .isInvalid() false if parsing fails', () => {
+      sinon.stub(Packet.prototype, 'parseBuffer').throws();
+      sinon.stub(Packet.prototype, 'isValid').returns(true);
       const fakebuffer = Buffer.alloc(0);
       const packet = new Packet(fakebuffer);
 
       expect(packet.isValid()).to.be.false;
-    }));
+    });
   });
 
 
-  describe('#parseHeader', function() {
-    it('should parse out header fields', function() {
+  describe('#parseHeader', () => {
+    it('should parse out header fields', () => {
       const buf = Buffer.from([0, 37, 0, 0, 0, 4, 0, 3, 0, 2, 0, 1]);
       const wrapper = new BufferWrapper(buf);
 
@@ -64,8 +59,8 @@ describe('Packet', function() {
   });
 
 
-  describe('#writeHeader', function() {
-    it('should write the header correctly', function() {
+  describe('#writeHeader', () => {
+    it('should write the header correctly', () => {
       const packet = new Packet();
 
       packet.header.ID = 45;
@@ -101,7 +96,7 @@ describe('Packet', function() {
   });
 
 
-  describe('#parseBuffer', function() {
+  describe('#parseBuffer', () => {
     const isResourceRecord = record => record instanceof ResourceRecord;
     const isQueryRecord = record => record instanceof QueryRecord;
 
@@ -113,7 +108,7 @@ describe('Packet', function() {
     }
 
     function generateTestFn(file, runTests) {
-      return function() {
+      return () => {
         const data = fs.readFileSync(packetDir + '/' + file);
         const packet = new Packet(data);
 
@@ -134,7 +129,7 @@ describe('Packet', function() {
     };
 
 
-    describe('should parse uncompressed packetDir', function() {
+    describe('should parse uncompressed packetDir', () => {
 
       test('service probe.uncompressed.bin', function(packet) {
         expect(packet.isProbe()).to.be.true;
@@ -209,7 +204,7 @@ describe('Packet', function() {
     });
 
 
-    describe('should parse compressed packetDir', function() {
+    describe('should parse compressed packetDir', () => {
 
       test('service probe.bin', function(packet) {
         expect(packet.isProbe()).to.be.true;
@@ -285,13 +280,13 @@ describe('Packet', function() {
   });
 
 
-  describe('#toBuffer', function() {
-    describe('should write packet to buffer and do label compression', function() {
+  describe('#toBuffer', () => {
+    describe('should write packet to buffer and do label compression', () => {
       const compressedFiles = fs.readdirSync(packetDir)
         .filter(name => name.indexOf('uncompressed') === -1);
 
       compressedFiles.forEach((file) => {
-        it(file, function() {
+        it(file, () => {
           const input = fs.readFileSync(packetDir + '/' + file);
           const packet = new Packet(input);
           const output = packet.toBuffer();
@@ -312,8 +307,8 @@ describe('Packet', function() {
   });
 
 
-  describe('#split', function() {
-    it('should split answers in half', function() {
+  describe('#split', () => {
+    it('should split answers in half', () => {
       const C = new TXTRecord({name: 'C'});
       const D = new TXTRecord({name: 'D'});
       const A = new TXTRecord({name: 'A', additionals: [C]});
@@ -332,7 +327,7 @@ describe('Packet', function() {
       expect(two.additionals).to.eql([D]);
     });
 
-    it('should split questions in half', function() {
+    it('should split questions in half', () => {
       const A = new QueryRecord({name: 'C'});
       const B = new QueryRecord({name: 'D'});
       const C = new TXTRecord({name: 'A'});
@@ -350,7 +345,7 @@ describe('Packet', function() {
       expect(two.answers).to.eql([D]);
     });
 
-    it('should give up and return empty packets for anything else...', function() {
+    it('should give up and return empty packets for anything else...', () => {
       const A = new QueryRecord({name: 'C'});
       const B = new QueryRecord({name: 'D'});
 
@@ -366,7 +361,7 @@ describe('Packet', function() {
   });
 
 
-  describe('#equals', function() {
+  describe('#equals', () => {
     const A = new QueryRecord({name: 'A'});
     const B = new QueryRecord({name: 'B'});
     const C = new TXTRecord({name: 'C'});
@@ -392,14 +387,14 @@ describe('Packet', function() {
 
     const packet_6 = new Packet(); // <-- empty
 
-    it('return false if packets are not equal', function() {
+    it('return false if packets are not equal', () => {
       expect(packet_1.equals(packet_2)).to.be.false;
       expect(packet_2.equals(packet_1)).to.be.false;
       expect(packet_2.equals(packet_3)).to.be.false;
       expect(packet_4.equals(packet_5)).to.be.false;
     });
 
-    it('return true if packets are equal', function() {
+    it('return true if packets are equal', () => {
       expect(packet_1.equals(packet_1)).to.be.true;
       expect(packet_3.equals(packet_4)).to.be.true;
       expect(packet_6.equals(packet_6)).to.be.true;
@@ -407,12 +402,12 @@ describe('Packet', function() {
   });
 
 
-  describe('#toString', function() {
-    describe('should look pretty and not throw', function() {
+  describe('#toString', () => {
+    describe('should look pretty and not throw', () => {
       const files = fs.readdirSync(packetDir);
 
       files.forEach((file) => {
-        it(file, function() {
+        it(file, () => {
           const input = fs.readFileSync(packetDir + '/' + file);
           const packet = new Packet(input);
 

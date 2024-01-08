@@ -7,7 +7,7 @@ import { AAAARecord, ARecord, NSECRecord, PTRRecord, ResourceRecord, SRVRecord, 
 import { Packet } from './Packet';
 import { AdvertisementOptions, Advertisement as RealAdvertisement } from './Advertisement';
 
-import * as Fake from './test/Fake';
+import * as Fake from './test-mocks';
 import { NetworkInterface } from './NetworkInterface';
 import { Responder } from './Responder';
 import { sleep } from './sleep';
@@ -132,10 +132,10 @@ describe('Advertisement', () => {
     it('should bind interfaces & start advertising', function(done) {
       const { ad, networkInterface } = harness('_http._tcp', 1234);
 
-      sinon.stub(ad, '_getDefaultID').returns(Promise.resolve());
-      sinon.stub(ad, '_advertiseHostname').returns(Promise.resolve());
+      sinon.stub(ad as any, '_getDefaultID').returns(Promise.resolve());
+      sinon.stub(ad as any, '_advertiseHostname').returns(Promise.resolve());
 
-      sinon.stub(ad, '_advertiseService').callsFake(() => {
+      sinon.stub(ad as any, '_advertiseService').callsFake(() => {
         expect(networkInterface.bind).to.have.been.called;
         done();
       });
@@ -146,16 +146,16 @@ describe('Advertisement', () => {
     it('should return early if already started', function(done) {
       const { ad } = harness('_http._tcp', 1234);
 
-      sinon.stub(ad, '_getDefaultID');
-      sinon.stub(ad, '_advertiseHostname');
-      sinon.stub(ad, '_advertiseService');
+      sinon.stub(ad as any, '_getDefaultID');
+      sinon.stub(ad as any, '_advertiseHostname');
+      sinon.stub(ad as any, '_advertiseService');
 
       ad.start();
       ad.start(); // <-- does nothing
 
       // wait for promises
       setTimeout(() => {
-        expect(ad._getDefaultID).to.have.been.calledOnce
+        expect((ad as any)._getDefaultID).to.have.been.calledOnce
         done();
       }, 10);
     });
@@ -163,7 +163,7 @@ describe('Advertisement', () => {
     it('should run _onError if something breaks in the chain', function(done) {
       const { ad } = harness('_http._tcp', 1234);
       
-      sinon.stub(ad, '_getDefaultID').returns(Promise.reject());
+      sinon.stub((ad as any), '_getDefaultID').returns(Promise.reject());
 
       ad.on('error', () => done());
       ad.start();
@@ -269,9 +269,9 @@ describe('Advertisement', () => {
       (ad as any)._serviceResponder = responder;
       (ad as any)._hostnameResponder = responder;
 
-      sinon.stub(ad, '_getDefaultID').returns(Promise.resolve());
-      sinon.stub(ad, '_advertiseHostname').returns(Promise.resolve());
-      sinon.stub(ad, '_advertiseService').callsFake(() => complete());
+      sinon.stub((ad as any), '_getDefaultID').returns(Promise.resolve());
+      sinon.stub((ad as any), '_advertiseHostname').returns(Promise.resolve());
+      sinon.stub((ad as any), '_advertiseService').callsFake(() => complete());
 
       ad.start();
       sleep.emit('wake');
@@ -291,7 +291,7 @@ describe('Advertisement', () => {
       sinon.stub(packet, 'isLocal').returns(true);
       sinon.stub(packet, 'equals').returns(true);
 
-      ad._getDefaultID().then(() => {
+      (ad as any)._getDefaultID().then(() => {
         expect((ad as any)._defaultAddresses).to.equal(INTERFACES['Ethernet']);
         done();
       });
@@ -312,7 +312,7 @@ describe('Advertisement', () => {
       sinon.stub(packet_2, 'isLocal').returns(true);
       sinon.stub(packet_2, 'equals').returns(true);
 
-      ad._getDefaultID().catch(() => done());
+      (ad as any)._getDefaultID().catch(() => done());
 
       networkInterface.emit('query', packet_1);
       networkInterface.emit('query', packet_2);
@@ -332,11 +332,11 @@ describe('Advertisement', () => {
       const A = new ARecord({name: 'A'});
       const AAAA = new AAAARecord({name: 'AAAA', address: 'FE80::'});
 
-      const makeRecords = sinon.stub(ad, '_makeAddressRecords');
+      const makeRecords = sinon.stub((ad as any), '_makeAddressRecords');
       makeRecords.returns([AAAA]);
       makeRecords.withArgs((ad as any)._defaultAddresses).returns([A]);
 
-      ad._advertiseHostname().then(() => done());
+      (ad as any)._advertiseHostname().then(() => done());
 
       const expected = [AAAA, AAAA, AAAA]; // one per interfacae
 
@@ -349,10 +349,10 @@ describe('Advertisement', () => {
     it('should handle rename events with _onHostRename', () => {
       const { ad, responder } = harness('_http._tcp', 1234);
 
-      sinon.stub(ad, '_makeAddressRecords');
+      sinon.stub((ad as any), '_makeAddressRecords');
       sinon.stub((ad as any), '_onHostRename');
 
-      ad._advertiseHostname();
+      (ad as any)._advertiseHostname();
       responder.emit('rename');
 
       expect((ad as any)._onHostRename).to.have.been.called;
@@ -395,9 +395,9 @@ describe('Advertisement', () => {
       (ad as any).createResponder = createResponder;
 
       const SRV = new SRVRecord({name: 'SRV'});
-      sinon.stub(ad, '_makeServiceRecords').returns([SRV]);
+      sinon.stub((ad as any), '_makeServiceRecords').returns([SRV]);
 
-      ad._advertiseService();
+      (ad as any)._advertiseService();
 
       expect(createResponder).to.have.been.calledWith([SRV]);
     });
@@ -408,11 +408,11 @@ describe('Advertisement', () => {
       const createResponder = sinon.mock().returns(responder);
       (ad as any).createResponder = createResponder;
 
-      sinon.stub(ad, '_makeServiceRecords').returns([]);
+      sinon.stub((ad as any), '_makeServiceRecords').returns([]);
 
       ad.on('active', done);
 
-      ad._advertiseService();
+      (ad as any)._advertiseService();
 
       expect(createResponder).to.have.been.calledWith([]);
       responder.emit('probingComplete'); // <-- gets created with ^
@@ -421,14 +421,14 @@ describe('Advertisement', () => {
     it('should listen to responder rename event', () => {
       const { ad, responder } = harness('_http._tcp', 1234, { name: 'Instance' });
 
-      sinon.stub(ad, '_makeServiceRecords').returns([]);
+      sinon.stub((ad as any), '_makeServiceRecords').returns([]);
 
       ad.on('instanceRenamed', function(instance) {
         expect(instance).to.equal('Instance (2)');
         expect(ad.instanceName).to.equal('Instance (2)');
       });
 
-      ad._advertiseService();
+      (ad as any)._advertiseService();
 
       responder.emit('rename', 'Instance (2)');
     });
@@ -442,7 +442,7 @@ describe('Advertisement', () => {
 
     it('should return A/NSEC with IPv4 only interfaces', () => {
       const { ad } = harness('_http._tcp', 1234);
-      const records = ad._makeAddressRecords(IPv4s);
+      const records = (ad as any)._makeAddressRecords(IPv4s);
 
       expect(records).to.have.lengthOf(2);
       expect(records[0]).to.be.instanceOf(ARecord);
@@ -452,7 +452,7 @@ describe('Advertisement', () => {
 
     it('should return AAAA/NSEC with IPv6 only interfaces', () => {
       const { ad } = harness('_http._tcp', 1234);
-      const records = ad._makeAddressRecords(IPv6s);
+      const records = (ad as any)._makeAddressRecords(IPv6s);
 
       expect(records).to.have.lengthOf(2);
       expect(records[0]).to.be.instanceOf(AAAARecord); // <-- only one
@@ -463,7 +463,7 @@ describe('Advertisement', () => {
     it('should return A/AAAA/NSEC with IPv4/IPv6 interfaces', () => {
       const { ad } = harness('_http._tcp', 1234);
       const both  = [...IPv4s, ...IPv6s];
-      const records = ad._makeAddressRecords(both);
+      const records = (ad as any)._makeAddressRecords(both);
 
       expect(records).to.have.lengthOf(3);
       expect(records[0]).to.be.instanceOf(ARecord);
@@ -482,7 +482,7 @@ describe('Advertisement', () => {
       (ad as any)._hostnameResponder = <any>hostnameResponder;
       hostnameResponder.getRecords.returns([]);
 
-      const records = ad._makeServiceRecords();
+      const records = (ad as any)._makeServiceRecords();
 
       expect(records).to.have.lengthOf(6);
 

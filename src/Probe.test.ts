@@ -5,7 +5,7 @@ import { Packet } from './Packet';
 import { AAAARecord, ARecord, NSECRecord, ResourceRecord, SRVRecord, TXTRecord } from './ResourceRecord';
 import { Probe } from './Probe';
 
-import * as Fake from './test/Fake';
+import * as Fake from './test-mocks';
 import { jest } from '@jest/globals';
 
 jest.useFakeTimers();

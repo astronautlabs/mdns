@@ -4,14 +4,14 @@ import _ from 'lodash';
 import sinon from 'sinon';
 import { EventEmitter } from 'node:events';
 
-import { Query } from '../Query';
-import { Probe } from '../Probe';
-import { ExpiringRecordCollection } from '../ExpiringRecordCollection';
-import { NetworkInterface } from '../NetworkInterface';
-import { DisposableInterface } from '../DisposableInterface';
-import { GoodbyeResponse, MulticastResponse, UnicastResponse } from '../Response';
-import { ServiceResolver } from '../ServiceResolver';
-import { Responder } from '../Responder';
+import { Query } from './Query';
+import { Probe } from './Probe';
+import { ExpiringRecordCollection } from './ExpiringRecordCollection';
+import { NetworkInterface } from './NetworkInterface';
+import { DisposableInterface } from './DisposableInterface';
+import { GoodbyeResponse, MulticastResponse, UnicastResponse } from './Response';
+import { ServiceResolver } from './ServiceResolver';
+import { Responder } from './Responder';
 
 
 // adds reset method that resets all of the instances stubbed methods

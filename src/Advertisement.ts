@@ -18,6 +18,9 @@ import { Platform } from './Platform';
 
 const STATE = { STOPPED: 'stopped', STARTED: 'started' } as const;
 
+/**
+ * Options for the Advertisement constructor.
+ */
 export interface AdvertisementOptions {
     /**
      * The instance name to use. In a fully qualified domain, this is `Instance` in 
@@ -269,8 +272,10 @@ export class Advertisement extends EventEmitter {
      *
      * @emits 'stopped'
      *
-     * @param {Boolean} [forceImmediate]
-     * @param {Function} [callback]
+     * @param forceImmediate When true, ends the advertisement immediately without sending a Goodbye message. 
+     *                       This may cause the advertisement to remain active on browsers longer than desired,
+     *                       but will cause all network activity to cease immediately. 
+     * @param callback       Called when the stop is completed.
      */
     stop(forceImmediate = false, callback?: () => void) {
         //console.log(`[debug]: Stopping advertisement "${this._id}"...`);
@@ -314,24 +319,26 @@ export class Advertisement extends EventEmitter {
 
 
     /**
-     * Updates the adverts TXT record
-     * @param {object} txtObj
+     * Replaces the advertisement's TXT record with the given key/pair values.
+     * @param values The key/value pairs to use
      */
-    updateTXT(txtObj: Record<string, boolean | string | number>) {
+    updateTXT(values: Record<string, boolean | string | number>) {
         // validates txt first, will throw validation errors on bad input
-        validate.txt(txtObj);
+        validate.txt(values);
 
         if (this._serviceResponder == null) {
             //console.log(`[debug] ServiceResponder not ready`);
             return;
         }
 
+        this._txt = values;
+
         // make sure responder handles network requests in event loop before updating
         // (otherwise could have unintended record conflicts)
         setImmediate(() => {
             this._serviceResponder.updateEach(RType.TXT, (record) => {
-                record.txtRaw = misc.makeRawTXT(txtObj);
-                record.txt = misc.makeReadableTXT(txtObj);
+                record.txtRaw = misc.makeRawTXT(values);
+                record.txt = misc.makeReadableTXT(values);
             });
         });
     };
@@ -339,7 +346,7 @@ export class Advertisement extends EventEmitter {
     private _onErrorHandler: (err: Error) => void;
 
     /**
-     * Error handler. Does immediate shutdown
+     * Error handler. Does immediate shutdown without goodbyes.
      * @emits 'error'
      */
     private _onError(err) {
@@ -497,7 +504,7 @@ export class Advertisement extends EventEmitter {
      *
      * @emits 'instanceRenamed' when the service instance is renamed
      */
-    _advertiseService() {
+    private _advertiseService() {
         const records = this._makeServiceRecords();
         //console.log(`Advertising service:`);
         //console.dir(records);
@@ -539,7 +546,7 @@ export class Advertisement extends EventEmitter {
      * @param  {NetworkInterface} addresses
      * @return {ResourceRecords[]}
      */
-    _makeAddressRecords(addresses: Address[]) {
+    private _makeAddressRecords(addresses: Address[]) {
         const name = misc.fqdn(this._hostname, this._tld);
 
         const As = addresses
@@ -584,7 +591,7 @@ export class Advertisement extends EventEmitter {
      *
      * @return {ResourceRecords[]}
      */
-    _makeServiceRecords() {
+    private _makeServiceRecords() {
         const records = [];
         const interfaceRecords = this._hostnameResponder.getRecords();
 
@@ -646,6 +653,12 @@ export class Advertisement extends EventEmitter {
         return records;
     };
 
+    /**
+     * Acquire a NetworkInterface object for the given interface name (or the default network interface if none is 
+     * provided). This is primarily used for testing.
+     * @param name The name of the interface to acquire
+     * @returns 
+     */
     protected resolveNetworkInterface(name?: string) {
         return NetworkInterface.get(name);
     }

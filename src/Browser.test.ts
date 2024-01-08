@@ -3,16 +3,16 @@ import sinon from 'sinon';
 
 import { ServiceType } from './ServiceType';
 import { PTRRecord } from './ResourceRecord';
-import { Browser } from './Browser';
+import { Browser, BrowserOptions } from './Browser';
 import { NetworkInterface } from './NetworkInterface';
-import { ServiceResolver } from './ServiceResolver';
+import { Service, ServiceResolver } from './ServiceResolver';
 
-import * as Fake from './test/Fake';
+import * as Fake from './test-mocks';
 
 describe('Browser', function() {
   beforeEach(() => sinon.resetHistory());
-  
-  function harness(type: any, options?: { domain?: string; interface?: string; maintain?: boolean; resolve?: boolean; name?: string; }) {
+
+  function harness(type: any, options?: BrowserOptions) {
     const intf = Fake.NetworkInterface();
     const query = Fake.Query();
     const resolver = Fake.ServiceResolver();
@@ -73,7 +73,7 @@ describe('Browser', function() {
   describe('#start()', function() {
     it('should return this', function() {
       const { browser } = harness('_http._tcp');
-      sinon.stub(browser, '_startQuery');
+      sinon.stub((browser as any), '_startQuery');
 
       expect(browser.start()).to.equal(browser);
     });
@@ -81,7 +81,7 @@ describe('Browser', function() {
     it('should bind interface & start queries', function(done) {
       const { browser, networkInterface } = harness('_http._tcp');
 
-      sinon.stub(browser, '_startQuery').callsFake(() => {
+      sinon.stub((browser as any), '_startQuery').callsFake(() => {
         expect(networkInterface.bind).to.have.been.called;
         done();
       });
@@ -91,21 +91,21 @@ describe('Browser', function() {
 
     it('should return early if already started', function(done) {
       const { browser } = harness('_http._tcp');
-      sinon.stub(browser, '_startQuery');
+      sinon.stub((browser as any), '_startQuery');
 
       browser.start();
       browser.start(); // <-- does nothing
 
       // wait for promises
       setTimeout(() => {
-        expect(browser._startQuery).to.have.been.calledOnce;
+        expect((browser as any)._startQuery).to.have.been.calledOnce;
         done();
       }, 10);
     });
 
     it('should run _onError on startup errors', function(done) {
       const { browser } = harness('_http._tcp');
-      sinon.stub(browser, '_startQuery').throws(new Error())
+      sinon.stub((browser as any), '_startQuery').throws(new Error())
 
       browser.on('error', () => done());
       browser.start();
@@ -151,13 +151,14 @@ describe('Browser', function() {
       expect(browser.list()).to.eql([service]);
     });
 
-    it('should return services types that are currently active', function() {
+    it('should return service types that are currently active', function() {
       const { browser } = harness('_services._dns-sd._udp');
 
       const recordName = '_http._tcp.local.';
       (browser as any)._serviceTypes[recordName] = {name: 'http', protocol: 'tcp'};
 
-      expect(browser.list()).to.eql([{name: 'http', protocol: 'tcp'}]);
+      expect(browser.listServiceTypes().length).to.equal(1);
+      expect(browser.listServiceTypes()[0]).to.include({name: '_http', protocol: '_tcp'});
     });
   });
 
@@ -183,7 +184,7 @@ describe('Browser', function() {
     it('should query for individual services', function() {
       const { browser, query } = harness('_http._tcp');
 
-      browser._startQuery();
+      (browser as any)._startQuery();
 
       expect(query.add).to.have.been.calledWithMatch({
         name: '_http._tcp.local.',
@@ -194,7 +195,7 @@ describe('Browser', function() {
     it('should query for service subtypes', function() {
       const { browser, query } = harness('_http._tcp,subtype');
 
-      browser._startQuery();
+      (browser as any)._startQuery();
 
       expect(query.add).to.have.been.calledWithMatch({
         name: 'subtype._sub._http._tcp.local.',
@@ -205,7 +206,7 @@ describe('Browser', function() {
     it('should query for available service types', function() {
       const { browser, query } = harness('_services._dns-sd._udp');
 
-      browser._startQuery();
+      (browser as any)._startQuery();
 
       expect(query.add).to.have.been.calledWithMatch({
         name: '_services._dns-sd._udp.local.',
@@ -226,9 +227,15 @@ describe('Browser', function() {
 
       browser
         .on('serviceUp', (type) => {
-          expect(browser.list()).to.not.be.empty;
-          expect(browser.list()[0]).to.eql({name: 'http', protocol: 'tcp'});
-          expect(type).eql({name: 'http', protocol: 'tcp'});
+          try {
+            expect(browser.listServiceTypes()).to.not.be.empty;
+            expect(browser.listServiceTypes()[0]).to.include({name: '_http', protocol: '_tcp'});
+            expect(type).eql({name: 'http', protocol: 'tcp'});
+          } catch (e) {
+            done(e);
+            return;
+          }
+
           done();
         })
         .start();
@@ -251,7 +258,7 @@ describe('Browser', function() {
       setTimeout(() => query.emit('answer', goodbye), 10);
 
       setTimeout(() => {
-        expect(browser.list()).to.be.empty;
+        expect(browser.listServiceTypes()).to.be.empty;
         done();
       }, 10);
     });
@@ -267,7 +274,12 @@ describe('Browser', function() {
       setTimeout(() => query.emit('answer', PTR), 10); // <-- ignored
 
       setTimeout(() => {
-        expect(browser.list()).to.have.lengthOf(1);
+        try {
+          expect(browser.listServiceTypes()).to.have.lengthOf(1);
+        } catch (e) {
+          done(e);
+          return;
+        }
         done();
       }, 10);
     });
@@ -282,7 +294,7 @@ describe('Browser', function() {
       setTimeout(() => query.emit('answer', PTR), 10); // <-- ignored
 
       setTimeout(() => {
-        expect(browser.list()).to.be.empty;
+        expect(browser.listServiceTypes()).to.be.empty;
         done();
       }, 10);
     });
@@ -299,8 +311,10 @@ describe('Browser', function() {
       const { browser, query } = harness('_http._tcp', {resolve: false});
 
       browser
-        .on('serviceUp', (name) => {
-          expect(name).to.equal('Instance');
+        .on('serviceUp', (service: Service) => {
+          expect(service.name).to.equal('Instance');
+          expect(service.addresses).to.be.undefined;
+          expect(service.host).to.be.undefined;
           done();
         })
         .start();

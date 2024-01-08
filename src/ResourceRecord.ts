@@ -3,6 +3,7 @@ import { hash } from './hash';
 import { RClass, RNums, RType } from './constants';
 
 import * as misc from './misc';
+import { MulticastDNS, ResolverOptions } from './MulticastDNS';
 
 export interface ResourceRecordInit {
     name: string;
@@ -366,6 +367,13 @@ export class ARecord extends ResourceRecord {
     _getRDataStr() {
         return this.address;
     }
+
+    /**
+     * Query mDNS for the given hostname looking for an A (IPv4 address) record.
+     */
+    static resolve(hostname: string, options?: ResolverOptions) {
+        return MulticastDNS.A(hostname, options);
+    }
 }
 
 export interface PTRRecordInit extends ResourceRecordInit {
@@ -409,7 +417,6 @@ export class PTRRecord extends ResourceRecord {
     _getRDataStr() {
         return this.PTRDName;
     }
-
 }
 
 export interface TXTRecordInit extends ResourceRecordInit {
@@ -502,6 +509,13 @@ export class TXTRecord extends ResourceRecord {
     _getRDataStr() {
         return misc.truncate(JSON.stringify(this.txt), 30);
     }
+
+    /**
+     * Query mDNS for the given hostname looking for a TXT (text) record.
+     */
+    static resolve(hostname: string, options?: ResolverOptions) {
+        return MulticastDNS.TXT(hostname, options);
+    }
 }
 
 export interface AAAARecordInit extends ResourceRecordInit {
@@ -590,6 +604,13 @@ export class AAAARecord extends ResourceRecord {
     _getRDataStr() {
         return this.address;
     }
+
+    /**
+     * Query mDNS for the given hostname looking for an AAAA (IPv6 address) record.
+     */
+    static resolve(hostname: string, options?: ResolverOptions) {
+        return MulticastDNS.AAAA(hostname, options);
+    }
 }
 
 export interface SRVRecordInit extends ResourceRecordInit {
@@ -647,6 +668,13 @@ export class SRVRecord extends ResourceRecord {
 
     _getRDataStr() {
         return `${this.target} ${this.port} P:${this.priority} W:${this.weight}`;
+    }
+
+    /**
+     * Query mDNS for the given hostname looking for an SRV (DNS service) record.
+     */
+    static resolve(hostname: string, options?: ResolverOptions) {
+        return MulticastDNS.SRV(hostname, options);
     }
 }
 

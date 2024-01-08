@@ -12,7 +12,7 @@ import { PTRRecord, SRVRecord, TXTRecord } from './ResourceRecord';
 import { QueryRecord } from './QueryRecord';
 import { NetworkInterface } from './NetworkInterface';
 
-import * as Fake from './test/Fake';
+import * as Fake from './test-mocks';
 import { Platform } from './Platform';
 import { Socket } from 'dgram';
 import { jest } from '@jest/globals';

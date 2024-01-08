@@ -5,7 +5,7 @@ import { DisposableInterface as RealDisposableInterface } from './DisposableInte
 import { SocketType, Socket } from 'dgram';
 import { Platform } from './Platform';
 
-import * as Fake from './test/Fake';
+import * as Fake from './test-mocks';
 
 describe('DisposableInterface', function() {
   // interface addresses, same form as os.networkInterfaces() output

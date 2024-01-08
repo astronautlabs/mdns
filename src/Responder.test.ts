@@ -9,7 +9,7 @@ import { RType } from './constants';
 import { Responder } from './Responder';
 import { jest } from '@jest/globals';
 
-import * as Fake from './test/Fake';
+import * as Fake from './test-mocks';
 import { Probe } from './Probe';
 import { GoodbyeResponse, MulticastResponse, UnicastResponse } from './Response';
 

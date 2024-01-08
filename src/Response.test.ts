@@ -6,7 +6,7 @@ import { Packet } from './Packet';
 import { ARecord, NSECRecord, PTRRecord, TXTRecord } from './ResourceRecord';
 import { GoodbyeResponse, MulticastResponse, UnicastResponse } from './Response';
 
-import * as Fake from './test/Fake';
+import * as Fake from './test-mocks';
 import { jest } from '@jest/globals';
 
 jest.useFakeTimers();

@@ -2,7 +2,7 @@ import * as misc from './misc';
 import { ServiceType } from './ServiceType';
 import { EventEmitter } from 'node:events';
 
-import { ServiceResolver } from './ServiceResolver';
+import { Service, ServiceResolver } from './ServiceResolver';
 import { NetworkInterface } from './NetworkInterface';
 import { Query } from './Query';
 
@@ -10,11 +10,49 @@ import { RType } from './constants';
 import { PTRRecord, ResourceRecord } from './ResourceRecord';
 const STATE = { STOPPED: 'stopped', STARTED: 'started' } as const;
 
+import type { Advertisement } from './Advertisement';
+import { MulticastDNS } from './MulticastDNS';
+
 /**
- * @emits 'serviceUp'
- * @emits 'serviceChanged'
- * @emits 'serviceDown'
- * @emits 'error'
+ * Options for the Browser constructor.
+ */
+export interface BrowserOptions {
+    /**
+     * Top level domain to search. If not provided, this defaults to "local."
+     */
+    tld?: string;
+    
+    /**
+     * Name of a network interface to browse on. If not provided, uses the default "any" interface.
+     */
+    interface?: string;
+
+    /**
+     * Whether to track changes/removal of discovered services. Defaults to true. Set to false if you only need to 
+     * do initial service discovery, and are not interested in knowing when the service information is changed or 
+     * removed. When false, you will only receive `serviceUp` events (`serviceDown` or `serviceUpdated` will not be
+     * emitted).
+     */
+    maintain?: boolean;
+
+    /**
+     * Whether to resolve the address information and metadata for discovered services. Defaults to true. Set to false 
+     * if you only need the instance/mDNS name, in which case only the `name` field of `Service` objects 
+     * emitted in `serviceUp` events will be included, all the rest will be undefined.
+     */
+    resolve?: boolean;
+}
+
+/**
+ * Provides discovery of network services via mDNS/DNS-SD. Services are added for discovery using advertisements 
+ * (see {@link Advertisement}). Each `Browser` instance can discover services of a specific {@link ServiceType}.
+ * 
+ * Events
+ * 
+ * - Use event 'serviceUp' to receive information about newly discovered services
+ * - Use event 'serviceChanged' to receive updates on already discovered services
+ * - Use event 'serviceDown' to know when services go offline or become otherwise unavailable
+ * - Use event 'error' to react to errors in the mDNS stack or network interface
  */
 export class Browser extends EventEmitter {
     /**
@@ -23,7 +61,7 @@ export class Browser extends EventEmitter {
      * @param {ServiceType|Object|String|Array} type - the service to browse
      * @param {Object} [options]
      */
-    constructor(type, options: { domain?: string, interface?: string, maintain?: boolean, resolve?: boolean, name?: string } = {}) {
+    constructor(type, options: BrowserOptions = {}) {
         super();
 
         // convert argument ServiceType to validate it (might throw)
@@ -42,7 +80,7 @@ export class Browser extends EventEmitter {
         this._serviceName = serviceType.name;
         this._subtype = serviceType.subtypes[0];
         this._isWildcard = serviceType.isEnumerator;
-        this._domain = options.domain || 'local.';
+        this._domain = options.tld || 'local.';
         this._maintain = ('maintain' in options) ? options.maintain : true;
         this._resolve = ('resolve' in options) ? options.resolve : true;
         this._interface = this.resolveNetworkInterface(options.interface);
@@ -74,10 +112,26 @@ export class Browser extends EventEmitter {
     private _offswitch = new EventEmitter();
 
     /**
-     * Starts browser
-     * @return {this}
+     * Given the DNS name of a service, resolve its address information and metadata.
      */
-    start() {
+    static resolveService(name: string, options: { timeout?: number, interface?: string } = {}) {
+        return MulticastDNS.resolveService(name, options);
+    }
+
+    /**
+     * Given the DNS name of a service, resolve its address information and metadata.
+     * This is the same information you get from the serviceUp/serviceChanged events when the 
+     * `resolve` option is set to `true`. If `resolve` is false however and you still wish to 
+     * resolve the service details, you can use this method.
+     */
+    resolveService(name: string, options: { timeout?: number } = {}) {
+        return Browser.resolveService(name, { interface: this._interface.id, ...options });
+    }
+
+    /**
+     * Starts browser
+     */
+    start(): this {
         if (this._state === STATE.STARTED) {
             // [debug]: Browser already started!;
             return this;
@@ -106,7 +160,7 @@ export class Browser extends EventEmitter {
      *   - remove all listeners since the browser is down
      *   - deregister from the interfaces so they can shut down if needed
      */
-    stop() {
+    stop(): this {
         // [debug]: Stopping browser for "${this._id}";
 
         if (this._onErrorHandler) this._interface.off('error', this._onErrorHandler);
@@ -122,31 +176,45 @@ export class Browser extends EventEmitter {
         this._state = STATE.STOPPED;
         this._resolvers = {};
         this._serviceTypes = {};
+
+        return this;
     };
 
+    /**
+     * Get a list of currently known service types. Only available when browsing
+     * Service Types (see {@link ServiceType.all()}).
+     * 
+     * @throws `TypeError` when Browser is not configured to browse for Service Types (`ServiceType.all()`)
+     */
+    listServiceTypes() {
+        if (!this._isWildcard)
+            throw new TypeError(`Only available when browsing Service Types (ServiceType.all())`);
+
+        return Object.values(this._serviceTypes).map(t => new ServiceType(t));
+    };
 
     /**
-     * Get a list of currently available services
-     * @return {Objects[]}
+     * Get a list of currently discovered services.
+     * 
+     * @throws `TypeError` when browsing Service Types (see {@link ServiceType.all()}). See `listServiceTypes()` 
+     *                     instead.
      */
-    list() {
-        // if browsing service types
-        if ((this._isWildcard)) {
-            return Object.values(this._serviceTypes);
-        }
+    list(): Service[] {
+        if (this._isWildcard)
+            throw new TypeError(`Not available when browsing Service Types (ServiceType.all())`);
 
         return Object.values(this._resolvers)
             .filter(resolver => resolver.isResolved())
             .map(resolver => resolver.service());
     };
 
-    _onErrorHandler: (err: Error) => void;
+    private _onErrorHandler: (err: Error) => void;
 
     /**
      * Error handler
      * @emits 'error'
      */
-    _onError(err) {
+    private _onError(err) {
         // [debug]: Error on "${this._id}", shutting down. Got: \n${err};
 
         this.stop();
@@ -159,7 +227,7 @@ export class Browser extends EventEmitter {
      * or service types using enumerator (listing all mDNS service on a network).
      * Queries are sent out on each network interface the browser uses.
      */
-    _startQuery() {
+    private _startQuery() {
         let name = misc.fqdn(this._serviceName, this._protocol, this._domain);
 
         if (this._subtype) name = misc.fqdn(this._subtype, '_sub', name);
@@ -187,7 +255,7 @@ export class Browser extends EventEmitter {
      * @emits 'serviceUp' with new service types
      * @param {ResourceRecord} answer
      */
-    _addServiceType(answer) {
+    private _addServiceType(answer) {
         const name = answer.PTRDName;
 
         if (this._state === STATE.STOPPED) return // debug.v('Already stopped, ignoring');
@@ -221,7 +289,7 @@ export class Browser extends EventEmitter {
      * @param {ResourceRecord}   answer        - the record that has service data
      * @param {ResourceRecord[]} [additionals] - other records that might be related
      */
-    _addService(answer: PTRRecord, additionals: ResourceRecord[]) {
+    private _addService(answer: PTRRecord, additionals: ResourceRecord[]) {
         const name = answer.PTRDName;
 
         if (this._state === STATE.STOPPED) return // debug.v('Already stopped, ignoring');
@@ -231,7 +299,9 @@ export class Browser extends EventEmitter {
         // [debug]: Found new service: "${name}";
 
         if (!this._resolve) {
-            this.emit('serviceUp', misc.parse(name).instance);
+            this.emit('serviceUp', {
+                name: misc.parse(name).instance
+            });
             return;
         }
 
@@ -266,10 +336,19 @@ export class Browser extends EventEmitter {
         resolver.start(additionals);
     };
 
+    /**
+     * Create a ServiceResolver instance for the given service name.
+     * This is primarily used for testing.
+     */
     protected createServiceResolver(name: string) {
         return new ServiceResolver(name, this._interface);
     }
 
+    /**
+     * Acquire a NetworkInterface object for the given interface name.
+     * If no interface name is provided, use the default/any interface.
+     * This is primarily used for testing.
+     */
     protected resolveNetworkInterface(name?: string) {
         return NetworkInterface.get(name);
     }

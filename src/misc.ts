@@ -31,7 +31,7 @@ export function hostname() {
  * Deals with these name formats:
  * -       Instance . _service . _protocol . domain .
  * - Subtype . _sub . _service . _protocol . domain .
-* -                  _service . _protocol . domain .
+ * -                  _service . _protocol . domain .
  * - Single_Label_Host . local .
  *
  * If name fails to parse as expected, it returns an empty obj.

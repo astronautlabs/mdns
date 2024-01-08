@@ -2,12 +2,12 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { AAAARecord, ARecord, SRVRecord, TXTRecord } from './ResourceRecord';
-import * as resolve from './resolve';
+import { MulticastDNS } from './MulticastDNS';
 
-import * as Fake from './test/Fake';
+import * as Fake from './test-mocks';
 import { DisposableInterface } from './DisposableInterface';
 
-describe('resolve', function() {
+describe('MulticastDNS', function() {
   const intf = Fake.DisposableInterface();
 
   sinon.stub(DisposableInterface, 'isValidName')
@@ -19,9 +19,9 @@ describe('resolve', function() {
   const query = Fake.Query(); // does nothing
   const resolver = Fake.ServiceResolver(); // does nothing
 
-  resolve.resolveMechanics.createInterface = () => intf;
-  resolve.resolveMechanics.createQuery = () => query;
-  resolve.resolveMechanics.createServiceResolver = () => <any>resolver;
+  MulticastDNS.createInterface = () => intf;
+  MulticastDNS.createQuery = () => query;
+  MulticastDNS.createServiceResolver = () => <any>resolver;
 
   const A    = new ARecord({name: 'A', address: '1.1.1.1'});
   const AAAA = new AAAARecord({name: 'AAAA', address: 'FF::'});
@@ -32,29 +32,29 @@ describe('resolve', function() {
 
   describe('.resolve', function() {
     describe('should throw on invalid input', function() {
-      it('name', function() {
-        expect(() => (resolve as any).resolve()).to.throw(Error);
-        expect(() => (resolve as any).resolve('')).to.throw(Error);
-        expect(() => (resolve as any).resolve(999)).to.throw(Error);
+      it('name', async () => {
+        expect(() => (MulticastDNS as any).query()).to.throw(Error);
+        expect(() => (MulticastDNS as any).query('')).to.throw(Error);
+        expect(() => (MulticastDNS as any).query(999)).to.throw(Error);
       });
 
       it('qtype', function() {
-        expect(() => (resolve as any).resolve('name')).to.throw(Error);
-        expect(() => resolve.resolve('name', '')).to.throw(Error);
-        expect(() => resolve.resolve('name', 'WHAT')).to.throw(Error);
-        expect(() => resolve.resolve('name', 0)).to.throw(Error);
+        expect(() => MulticastDNS.query('name', undefined)).to.throw(Error);
+        expect(() => MulticastDNS.query('name', '' as any)).to.throw(Error);
+        expect(() => MulticastDNS.query('name', 'WHAT' as any)).to.throw(Error);
+        expect(() => MulticastDNS.query('name', 0)).to.throw(Error);
       });
 
       it('options', function() {
         const options = {interface: 'non-existant'};
 
-        expect(() => resolve.resolve('name', 1, 'wrong' as any)).to.throw(Error);
-        expect(() => resolve.resolve('name', 1, options)).to.throw(Error);
+        expect(() => MulticastDNS.query('name', 1, 'wrong' as any)).to.throw(Error);
+        expect(() => MulticastDNS.query('name', 1, options)).to.throw(Error);
       });
     });
 
     it('should resolve answer and any related records', function(done) {
-      resolve.resolve('record.name.', 'A').then((result) => {
+      MulticastDNS.query('record.name.', 'A').then((result) => {
         expect(result.answer).to.equal(A);
         expect(result.related).to.have.members([AAAA]);
         expect(intf.stop).to.have.been.called;
@@ -66,7 +66,7 @@ describe('resolve', function() {
     });
 
     it('should reject with an error on timeout', function(done) {
-      resolve.resolve('record.name', 'A').catch(() => done());
+      MulticastDNS.query('record.name', 'A').catch(() => done());
 
       setTimeout(() => query.emit('timeout'), 10);
     });
@@ -75,7 +75,7 @@ describe('resolve', function() {
 
   describe('.resolve4', function() {
     it('should resolve with an address', function(done) {
-      resolve.resolve4('record.name.').then((result) => {
+      MulticastDNS.A('record.name.').then((result) => {
         expect(result).to.equal(A.address);
         done();
       });
@@ -85,7 +85,7 @@ describe('resolve', function() {
     });
 
     it('should reject with an error on timeout', function(done) {
-      resolve.resolve4('record.name.').catch(() => done());
+      MulticastDNS.A('record.name.').catch(() => done());
 
       setTimeout(() => query.emit('timeout'), 10);
     });
@@ -94,7 +94,7 @@ describe('resolve', function() {
 
   describe('.resolve6', function() {
     it('should resolve with an address', function(done) {
-      resolve.resolve6('record.name.').then((result) => {
+      MulticastDNS.AAAA('record.name.').then((result) => {
         expect(result).to.equal(AAAA.address);
         done();
       });
@@ -103,7 +103,7 @@ describe('resolve', function() {
     });
 
     it('should reject with an error on timeout', function(done) {
-      resolve.resolve6('record.name.').catch(() => done());
+      MulticastDNS.AAAA('record.name.').catch(() => done());
 
       setTimeout(() => query.emit('timeout'), 10);
     });
@@ -112,7 +112,7 @@ describe('resolve', function() {
 
   describe('.resolveSRV', function() {
     it('should resolve with SRV info', function(done) {
-      resolve.resolveSRV('record.name.').then((result) => {
+      MulticastDNS.SRV('record.name.').then((result) => {
         expect(result).to.eql({
           target: SRV.target,
           port  : SRV.port,
@@ -125,7 +125,7 @@ describe('resolve', function() {
     });
 
     it('should reject with an error on timeout', function(done) {
-      resolve.resolveSRV('record.name.').catch(() => done());
+      MulticastDNS.SRV('record.name.').catch(() => done());
 
       setTimeout(() => query.emit('timeout'), 10);
     });
@@ -134,7 +134,7 @@ describe('resolve', function() {
 
   describe('.resolveTXT', function() {
     it('should resolve with TXT info', function(done) {
-      resolve.resolveTXT('record.name.').then((result) => {
+      MulticastDNS.TXT('record.name.').then((result) => {
         expect(result).to.eql({
           txt   : TXT.txt,
           txtRaw: TXT.txtRaw,
@@ -148,7 +148,7 @@ describe('resolve', function() {
     });
 
     it('should reject with an error on timeout', function(done) {
-      resolve.resolveTXT('record.name.').catch(() => done());
+      MulticastDNS.TXT('record.name.').catch(() => done());
 
       setTimeout(() => query.emit('timeout'), 10);
     });
@@ -157,17 +157,17 @@ describe('resolve', function() {
 
   describe('.resolveService', function() {
     describe('should throw on invalid input', function() {
-      it('name', function() {
-        expect(() => (resolve as any).resolveService()).to.throw(Error);
-        expect(() => resolve.resolveService('')).to.throw(Error);
-        expect(() => resolve.resolveService(999)).to.throw(Error);
+      it('name', async () => {
+        await expect(MulticastDNS.resolveService(undefined)).to.be.rejectedWith(Error);
+        await expect(MulticastDNS.resolveService('')).to.be.rejectedWith(Error);
+        await expect(MulticastDNS.resolveService(999 as any)).to.be.rejectedWith(Error);
       });
 
-      it('options', function() {
+      it('options', async () => {
         const options = {interface: 'non-existant'};
 
-        expect(() => resolve.resolveService('name', 'wrong' as any)).to.throw(Error);
-        expect(() => resolve.resolveService('name', options)).to.throw(Error);
+        await expect(MulticastDNS.resolveService('name', 'wrong' as any)).to.be.rejectedWith(Error);
+        await expect(MulticastDNS.resolveService('name', options)).to.be.rejectedWith(Error);
       });
     });
 
@@ -175,7 +175,7 @@ describe('resolve', function() {
       const expected = {fake: 'service'};
       resolver.service.returns(expected);
 
-      resolve.resolveService('service.name.').then((result) => {
+      MulticastDNS.resolveService('service.name.').then((result) => {
         expect(result).to.equal(expected);
         expect(resolver.stop).to.have.been.called;
         expect(intf.stop).to.have.been.called;
@@ -186,7 +186,7 @@ describe('resolve', function() {
     });
 
     it('should reject with an error on timeouts', function(done) {
-      resolve.resolveService('service.name', {timeout: 10}).catch(() => done());
+      MulticastDNS.resolveService('service.name', {timeout: 10}).catch(() => done());
     });
   });
 
