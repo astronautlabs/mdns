@@ -1,5 +1,5 @@
 {
-  "name": "@gravitysoftware/dnssd",
+  "name": "@astronautlabs/mdns",
   "version": "1.0.0",
   "description": "Fully featured mDNS and DNS-SD implementation in Typescript",
   "keywords": [
