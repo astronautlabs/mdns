@@ -257,7 +257,7 @@ export class Query extends EventEmitter {
      * (always?) shared records for questions that have multiple possible answers,
      * like PTRs.
      */
-    private _addKnownAnswers(packet) {
+    private _addKnownAnswers(packet: Packet) {
         // only known answers whose TTL is >50% of the original should be included
         const knownAnswers = this._knownAnswers.getAboveTTL(0.50);
 
