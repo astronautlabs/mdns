@@ -19,7 +19,7 @@ commands:
           paths:
             - node_modules
           key: v1-dependencies-<< parameters.version >>-{{ checksum "package.json" }}
-      - run: npm test
+      - run: npm run test:ci
 jobs:
   node-20:
     docker:

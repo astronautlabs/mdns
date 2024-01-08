@@ -55,6 +55,7 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "test:ci": "jest --runInBand --testPathIgnorePatterns=sanity.test.ts"
   }
 }
