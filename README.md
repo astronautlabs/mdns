@@ -11,7 +11,7 @@
 
 > 📺 Part of the **Astronaut Labs Broadcast Suite**
 
-> ⚠ **Production Quality**  
+> ✅ **Production Quality**  
 > This library is ready for use today (`v1.x.x`) but will be receiving substantial API upgrades and retooling to use 
 > more of the `@astronautlabs/*` frameworks in `v2.x`, so expect fairly large compatibility changes when those 
 > versions are released.
