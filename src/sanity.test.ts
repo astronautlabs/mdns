@@ -8,7 +8,7 @@ import { MulticastDNS } from './MulticastDNS';
 import { Platform } from './Platform';
 
 import _ from 'lodash';
-import { Service } from './ServiceResolver';
+import { Service } from './Service';
 
 jest.setTimeout(240_000); // these will take a while
 

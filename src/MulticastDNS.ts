@@ -1,10 +1,11 @@
 import { Query } from './Query';
-import { Service, ServiceResolver } from './ServiceResolver';
+import { ServiceResolver } from './ServiceResolver';
 import { DisposableInterface } from './DisposableInterface';
 import { EventEmitter } from 'node:events';
 import { ValidationError } from './ValidationError';
 import { RType } from './constants';
 import { AAAARecord, ARecord, ResourceRecord, SRVRecord, TXTRecord } from './ResourceRecord';
+import { Service } from './Service';
 
 export interface ResolverOptions {
     /**

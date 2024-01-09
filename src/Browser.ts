@@ -2,7 +2,7 @@ import * as misc from './misc';
 import { ServiceType } from './ServiceType';
 import { EventEmitter } from 'node:events';
 
-import { Service, ServiceResolver } from './ServiceResolver';
+import { ServiceResolver } from './ServiceResolver';
 import { NetworkInterface } from './NetworkInterface';
 import { Query } from './Query';
 
@@ -12,6 +12,7 @@ const STATE = { STOPPED: 'stopped', STARTED: 'started' } as const;
 
 import type { Advertisement } from './Advertisement';
 import { MulticastDNS } from './MulticastDNS';
+import { Service } from './Service';
 
 /**
  * Options for the Browser constructor.

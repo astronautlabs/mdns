@@ -5,9 +5,10 @@ import { ServiceType } from './ServiceType';
 import { PTRRecord } from './ResourceRecord';
 import { Browser, BrowserOptions } from './Browser';
 import { NetworkInterface } from './NetworkInterface';
-import { Service, ServiceResolver } from './ServiceResolver';
+import { ServiceResolver } from './ServiceResolver';
 
 import * as Fake from './test-mocks';
+import { Service } from './Service';
 
 describe('Browser', function() {
   beforeEach(() => sinon.resetHistory());
