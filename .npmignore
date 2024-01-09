@@ -1,0 +1,10 @@
+node_modules/
+coverage/
+.vscode/
+.circleci/
+src/**/*.test.ts
+src/**/test-mocks.ts
+dist/**/*.test.js
+dist/**/test-mocks.js
+jest.config.ts
+jest.setup.ts
