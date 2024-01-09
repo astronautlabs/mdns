@@ -49,7 +49,7 @@
     "chai-as-promised": "^7.1.1",
     "jest": "^29.7.0",
     "lodash": "^4.17.21",
-    "sinon": "^11.0.0",
+    "sinon": "^17.0.1",
     "sinon-chai": "^3.7.0",
     "strip-ansi": "^6.0.1",
     "ts-jest": "^29.1.1",
@@ -58,8 +58,8 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "test": "jest --runInBand",
-    "test:ci": "jest --runInBand --testPathIgnorePatterns=sanity.test.ts",
+    "test": "npm run build && jest --runInBand",
+    "test:ci": "npm run build && jest --runInBand --testPathIgnorePatterns=sanity.test.ts",
     "prepublishOnly": "npm test"
   }
 }
