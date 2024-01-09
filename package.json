@@ -60,7 +60,6 @@
   "scripts": {
     "build": "tsc -b",
     "test": "npm run build && jest --runInBand",
-    "test:ci": "npm run build && jest --runInBand --testPathIgnorePatterns=sanity.test.ts",
-    "prepublishOnly": "npm test"
+    "test:ci": "npm run build && jest --runInBand --testPathIgnorePatterns=sanity.test.ts"
   }
 }
