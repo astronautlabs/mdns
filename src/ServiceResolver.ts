@@ -57,6 +57,8 @@ export class ServiceResolver extends StateMachine {
         this.txt = null;
         this.txtRaw = null;
         this._batch = [];
+
+        this._offswitch.setMaxListeners(50);
     }
 
     fullname: string;

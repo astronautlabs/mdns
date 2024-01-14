@@ -153,7 +153,9 @@ export class MulticastDNS {
     
         const intf = this.createInterface(options.interface);
         const killswitch = new EventEmitter();
-    
+
+        killswitch.setMaxListeners(50);
+
         return new Promise<Answer<T>>((resolve, reject) => {
             function stop() {
                 killswitch.emit('stop');

@@ -87,6 +87,8 @@ export class Browser extends EventEmitter {
         this._interface = this.resolveNetworkInterface(options.interface);
         this._state = STATE.STOPPED;
 
+        this._offswitch.setMaxListeners(50);
+        
         // emitter used to stop child queries instead of holding onto a reference
         // for each one
     }

@@ -134,6 +134,7 @@ export class Responder extends StateMachine {
     this._instance = misc.parse(this._fullname).instance;
     if (!this._instance) throw Error('No instance name found in records');
 
+    this._offswitch.setMaxListeners(50);
   }
 
   states = {
