@@ -71,6 +71,8 @@ export class NetworkInterface extends EventEmitter {
     constructor(name?: string, address?: string) {
         super();
 
+        this.setMaxListeners(50);
+
         this._id = name || 'INADDR_ANY';
         this._multicastAddr = address;
 
