@@ -38,6 +38,8 @@ function addEventEmitter(stub) {
   // need to run contructor on it
   EventEmitter.call(stub);
 
+  stub.setMaxListeners(50);
+
   // make em spies
   sinon.spy(stub, 'emit');
   sinon.spy(stub, 'on');

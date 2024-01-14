@@ -140,7 +140,7 @@ export class Responder extends StateMachine {
   states = {
     probing: {
       enter: () => {
-        // [debug]: Now probing for: ${this._fullname};
+        //console.debug(`[debug]: Responder#${this._id}: Now probing for: ${this._fullname}`);
   
         const onSuccess = (early) => { this.transition('responding', early); };
         const onFail = () => { this.transition('conflict'); };
@@ -319,7 +319,7 @@ export class Responder extends StateMachine {
   _offswitch = new EventEmitter();
 
   start() {
-    // [debug]: Starting responder (${this._id});
+    //console.debug(`[debug]: Starting responder (${this._id})`);
     this._addListeners();
     this.transition('probing');
   }
@@ -327,7 +327,7 @@ export class Responder extends StateMachine {
 
   // Immediately stops the responder (no goodbyes)
   stop() {
-    // [debug]: Stopping responder (${this._id});
+    //console.debug(`[debug]: Stopping responder (${this._id})`);
     this.transition('stopped');
   }
 
@@ -420,7 +420,7 @@ export class Responder extends StateMachine {
    * may finish early in some situations. If they do, onSuccess is called with
    * `true` to indicate that.
    */
-  _sendProbe(onSuccess, onFail) {
+  private _sendProbe(onSuccess: (finishedEarly: boolean) => void, onFail: () => void) {
     // [debug]: Sending probes for "${this._fullname}". (${this._id});
     if (this.state === 'stopped') return // [debug]: ... already stopped!;
 
@@ -442,8 +442,8 @@ export class Responder extends StateMachine {
     this.createProbe()
       .add(records)
       .bridgeable(this._bridgeable)
-      .once('conflict', onFail)
-      .once('complete', onSuccess)
+      .once('conflict', () => onFail())
+      .once('complete', (finishedEarly: boolean) => onSuccess(finishedEarly))
       .start();
   }
 

@@ -58,11 +58,12 @@ const INTERFACES: NodeJS.Dict<os.NetworkInterfaceInfo[]> = {
         internal: true } ],
 };
 
-sinon.stub(Platform, 'getNetworkInterfaces').returns(INTERFACES);
-
 describe('Advertisement', () => {
   beforeEach(() => {
-    sinon.resetHistory();
+    sinon.stub(Platform, 'getNetworkInterfaces').returns(INTERFACES);
+  });
+  afterEach(() => {
+    sinon.restore();
     sleep.removeAllListeners();
   });
 

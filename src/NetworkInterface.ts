@@ -61,23 +61,15 @@ export class NetworkInterface extends EventEmitter {
      */
     private static active: Record<string, NetworkInterface> = {};
 
-    /**
-     * Creates a new NetworkInterface
-     * @class
-     * @extends EventEmitter
-     *
-     * @param {string} name
-     */
     constructor(name?: string, address?: string) {
         super();
 
         this.setMaxListeners(50);
 
+        // [debug]: Creating new NetworkInterface on '${this._id}'
+        
         this._id = name || 'INADDR_ANY';
         this._multicastAddr = address;
-
-        // [debug]: Creating new NetworkInterface on '${this._id}'
-        EventEmitter.call(this);
 
         // incoming / outgoing records
         this.cache = new ExpiringRecordCollection([], `${this._id}'s cache`);

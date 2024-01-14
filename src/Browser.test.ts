@@ -11,7 +11,7 @@ import * as Fake from './test-mocks';
 import { Service } from './Service';
 
 describe('Browser', function() {
-  beforeEach(() => sinon.resetHistory());
+  afterEach(() => sinon.restore());
 
   function harness(type: any, options?: BrowserOptions) {
     const intf = Fake.NetworkInterface();

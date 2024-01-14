@@ -107,7 +107,7 @@ describe('Responder', () => {
   const records = [PTR_1, SRV_1, TXT_1, NSEC_1];
   const bridgeable = [PTR_1, SRV_1, TXT_1, NSEC_1, PTR_2, SRV_2, TXT_2, NSEC_2];
 
-  beforeEach(() => sinon.resetHistory());
+  afterEach(() => sinon.restore());
 
   describe('#start()', () => {
     it('should transition to probing state', () => {
@@ -230,7 +230,7 @@ describe('Responder', () => {
   describe('#_sendProbe()', () => {
     it('should filter unique records for each interface to send', () => {
       const { responder, probe } = harness(records, bridgeable);
-      responder._sendProbe(_.noop, _.noop);
+      (responder as any)._sendProbe(_.noop, _.noop);
 
       expect(probe.add).to.have.been.calledWithMatch([SRV_1, TXT_1, NSEC_1]);
     });
@@ -246,7 +246,7 @@ describe('Responder', () => {
       // alter stub behavior
       cache.has.returns(true);
 
-      responder._sendProbe(onSuccess, _.noop);
+      (responder as any)._sendProbe(onSuccess, _.noop);
       expect(probe.add).to.not.have.been.called;
 
       // reset stub behavior
@@ -259,7 +259,7 @@ describe('Responder', () => {
       // alter stub behavior
       cache.hasConflictWith.withArgs(SRV_1).returns(true);
 
-      responder._sendProbe(_.noop, _.noop);
+      (responder as any)._sendProbe(_.noop, _.noop);
       expect(probe.add).to.not.have.been.called;
 
       // reset stub behavior
@@ -274,14 +274,14 @@ describe('Responder', () => {
         done();
       }
 
-      responder._sendProbe(onSuccess, _.noop);
+      (responder as any)._sendProbe(onSuccess, _.noop);
       probe.emit('complete', true);
     });
 
     it('should do onFail if any probe has a conflict', function(done) {
       const { responder, probe } = harness(records, bridgeable);
 
-      responder._sendProbe(_.noop, done);
+      (responder as any)._sendProbe(_.noop, done);
       probe.emit('conflict');
     });
   });
@@ -647,8 +647,6 @@ describe('Responder', () => {
       isUnique: false, // <- can't be a conflict, just a different answer
     });
 
-    beforeEach(() => sinon.resetHistory());
-
     it('should do nothing with empty answer packets', () => {
       const { responder } = harness(records, bridgeable);
       sinon.stub(responder, 'transition');
@@ -945,5 +943,4 @@ describe('Responder', () => {
       expect(responder.state).to.equal('stopped');
     });
   });
-
 });
