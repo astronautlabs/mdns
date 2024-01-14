@@ -129,10 +129,10 @@ export class MulticastResponse extends EventEmitter {
         this._timers.clear();
 
         
-        this._intf.off('answer', this._onAnswerHandler = (packet: Packet) => this._onAnswer(packet))
-        this._intf.off('error', this._onErrorHandler = () => this.stop());
-        this._offswitch.off('stop', this._onStopHandler = () => this.stop());
-        sleep.off('wake', this._onWakeHandler = () => this.stop());
+        if (this._onAnswerHandler) this._intf.off('answer', this._onAnswerHandler)
+        if (this._onErrorHandler) this._intf.off('error', this._onErrorHandler);
+        if (this._onStopHandler) this._offswitch.off('stop', this._onStopHandler);
+        if (this._onWakeHandler) sleep.off('wake', this._onWakeHandler);
 
         this.emit('stopped');
     };
@@ -416,9 +416,9 @@ export class UnicastResponse extends EventEmitter {
 
         this._timers.clear();
 
-        this._intf.off('error', this._onErrorHandler);
-        this._offswitch.off('stop', this._onStopHandler);
-        sleep.off('wake', this._onWakeHandler);
+        if (this._onErrorHandler) this._intf.off('error', this._onErrorHandler);
+        if (this._onStopHandler) this._offswitch.off('stop', this._onStopHandler);
+        if (this._onWakeHandler) sleep.off('wake', this._onWakeHandler);
 
         this.emit('stopped');
     };
