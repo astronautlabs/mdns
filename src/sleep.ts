@@ -5,6 +5,9 @@
 import { EventEmitter } from 'node:events';
 
 export const sleep = new EventEmitter();
+
+sleep.setMaxListeners(100);
+
 let interval: NodeJS.Timeout;
 
 const frequency = 60 * 1000; // check for sleep once a minute
