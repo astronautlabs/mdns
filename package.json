@@ -1,6 +1,6 @@
 {
   "name": "@astronautlabs/mdns",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Fully featured mDNS and DNS-SD implementation in Typescript",
   "publishConfig": {
     "access": "public"
