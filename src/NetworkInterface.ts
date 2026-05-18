@@ -61,10 +61,25 @@ export class NetworkInterface extends EventEmitter {
      */
     private static active: Record<string, NetworkInterface> = {};
 
+    /**
+     * EventEmitter listener cap applied to every NetworkInterface singleton.
+     *
+     * A NetworkInterface is shared by every Advertisement, Browser, Responder,
+     * Probe, Response and Query bound to the same physical interface, so the
+     * subscriber count scales with the host application's advertised service
+     * count, not with anything inside this library. A hardcoded value would
+     * trigger spurious MaxListenersExceededWarning on hosts that publish more
+     * than a couple of services on a single interface.
+     *
+     * Defaults to `0` (unlimited), matching Node's convention for emitters
+     * whose listener count is bounded by application configuration.
+     */
+    static maxListeners = 0;
+
     constructor(name?: string, address?: string) {
         super();
 
-        this.setMaxListeners(50);
+        this.setMaxListeners(NetworkInterface.maxListeners);
 
         // [debug]: Creating new NetworkInterface on '${this._id}'
         
