@@ -107,6 +107,41 @@ describe('NetworkInterface', function() {
       expect((networkInterface as any)._isBound).to.equal(false);
       expect((networkInterface as any)._sockets).to.be.empty;
     });
+
+    it('should default to an unlimited listener cap', function() {
+      const networkInterface = new NetworkInterface();
+
+      expect(networkInterface.getMaxListeners()).to.equal(0);
+    });
+
+    it('should honour NetworkInterface.maxListeners overrides', function() {
+      const previous = NetworkInterface.maxListeners;
+      try {
+        NetworkInterface.maxListeners = 25;
+        const networkInterface = new NetworkInterface();
+        expect(networkInterface.getMaxListeners()).to.equal(25);
+      } finally {
+        NetworkInterface.maxListeners = previous;
+      }
+    });
+
+    it('should accept far more than the legacy hardcoded cap of 50 subscribers', function() {
+      const networkInterface = new NetworkInterface();
+      const handler = () => { /* noop */ };
+
+      for (let i = 0; i < 100; i++) {
+        networkInterface.on('answer', handler);
+        networkInterface.on('error', handler);
+      }
+
+      // 0 is Node's sentinel for "no cap"; with the default in place,
+      // attaching 100 listeners per event must not run into a cap.
+      expect(networkInterface.getMaxListeners()).to.equal(0);
+      expect(networkInterface.listenerCount('answer')).to.equal(100);
+      expect(networkInterface.listenerCount('error')).to.equal(100);
+
+      networkInterface.removeAllListeners();
+    });
   });
 
 
