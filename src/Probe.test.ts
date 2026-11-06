@@ -159,6 +159,21 @@ describe('Probe', function() {
       probe._onAnswer(incomingPacket);
     });
 
+    it('should ignore "conflicts" if packet came from this machine (eg. avahi)', function() {
+      const probe = new Probe(intf, offswitch);
+      probe.add(C);
+      probe.bridgeable([C]);
+
+      const incomingPacket = new Packet();
+      incomingPacket.setAnswers([conflict]);
+      sinon.stub(incomingPacket, 'isLocal').returns(true);
+
+      sinon.stub(probe, 'emit');
+      probe._onAnswer(incomingPacket);
+
+      expect(probe.emit).to.not.have.been.called;
+    });
+
     it('should ignore "conflicts" if packet was bridged', function() {
       const probe = new Probe(intf, offswitch);
       probe.add(C);

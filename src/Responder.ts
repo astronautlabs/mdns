@@ -700,6 +700,11 @@ export class Responder extends StateMachine {
         return this._sendAnnouncement();
       }
 
+      // ignore answers from this machine, eg. avahi/bonjour running alongside us
+      if (packet.isLocal()) {
+        return;
+      }
+
       // re-probe needed to verify uniqueness (doesn't rename until probing fails)
       // [debug]: Found conflict on incoming records, re-probing. (${this._id});
       return this.transition('probing');
