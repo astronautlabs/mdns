@@ -686,6 +686,21 @@ describe('Responder', () => {
       expect(responder.transition).to.have.been.calledWith('probing');
     });
 
+    it('should ignore conflicting answers that came from this machine (eg. avahi)', () => {
+      const { responder } = harness(records, bridgeable);
+      sinon.stub(responder, 'transition');
+      sinon.stub(responder, '_sendAnnouncement');
+
+      const packet = new Packet();
+      packet.setAnswers([conflictingSRV]);
+      sinon.stub(packet, 'isLocal').returns(true);
+
+      responder._onAnswer(packet);
+
+      expect(responder.transition).to.not.have.been.called;
+      expect(responder._sendAnnouncement).to.not.have.been.called;
+    });
+
     it('should re-announce "conflicting" bridged records', () => {
       const { responder } = harness(records, bridgeable);
       sinon.stub(responder, 'transition');

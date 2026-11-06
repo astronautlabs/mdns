@@ -223,9 +223,11 @@ export class Probe extends EventEmitter {
         // check each for a conflict but ignore if we think the record was
         // bridged from another interface (if the record set has the record on
         // some other interface, the packet was probably bridged)
+        // also ignore answers from this machine, e.g. avahi/bonjour running
+        // alongside us (same as in _onProbe)
 
         const conflicts = this._authorities.getConflicts(incoming);
-        const hasConflict = conflicts.length && !this._bridgeable.hasEach(conflicts);
+        const hasConflict = conflicts.length && !this._bridgeable.hasEach(conflicts) && !packet.isLocal();
 
         // a conflicting response from an authoritative responder is fatal and means
         // the record set needs to be renamed
